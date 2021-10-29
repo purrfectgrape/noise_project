@@ -3,6 +3,8 @@ title: "Tone Classification"
 author: "Giang Le and Helen Kim"
 date: "10/28/2021"
 output:
+  pdf_document: 
+    latex_engine: xelatex
   html_document:
     df_print: paged
 ---
@@ -130,7 +132,7 @@ voice_reports$phonation <- ifelse(grepl("A1", voice_reports$tone, ignore.case=T)
 
 # Assign creakiness or not
 voice_reports$creaky <- ifelse(grepl("creaky", voice_reports$phonation, ignore.case=T), 1, 0)
-head(voice_reports, 100)
+head(voice_reports, 20)
 ```
 
 ### Checking
@@ -193,18 +195,25 @@ voice_reports$noise2 <- relevel(voice_reports$noise, ref = "78")
 multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports)
 summary(multinom_noise)
 
-# The result in general supports our predictions regarding the relationship between relative noise levels
+# The result in general supports our predictions regarding the relationship
+#between relative noise levels
 # and F0, duration, intensity, etc.
 
 # For instance,
-# A one-unit increase in mean F0 is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.0133
-# A one-unit increase in mean F0 is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 0.006
+# A one-unit increase in mean F0 is associated with the decrease in the
+#log odds of quiet vs. 78 noise level in the amount of 0.0133
+# A one-unit increase in mean F0 is associated with the increase in the
+#log odds of 90 noise vs. 78 noise in the amount of 0.006
 
-# A one-unit increase in duration is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 5.795
-# A one-unit increase in duration is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 2.80
+# A one-unit increase in duration is associated with the decrease in the
+#log odds of quiet vs. 78 noise level in the amount of 5.795
+# A one-unit increase in duration is associated with the increase in the
+#log odds of 90 noise vs. 78 noise in the amount of 2.80
 
-# A one-unit increase in intensity is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.35
-# A one-unit increase in intensity is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 0.24
+# A one-unit increase in intensity is associated with the decrease in the
+#log odds of quiet vs. 78 noise level in the amount of 0.35
+# A one-unit increase in intensity is associated with the increase in the
+#log odds of 90 noise vs. 78 noise in the amount of 0.24
 
 ## Giang to double check this result
 # A one-unit increase in spectraltilt is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.066
