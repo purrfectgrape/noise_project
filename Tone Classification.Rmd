@@ -3,10 +3,10 @@ title: "Tone Classification"
 author: "Giang Le and Helen Kim"
 date: "10/28/2021"
 output:
-  pdf_document: 
-    latex_engine: xelatex
   html_document:
     df_print: paged
+  pdf_document: 
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
@@ -94,7 +94,7 @@ dim(voice_reports)
 ```
 
 ```{r}
-# Assigning if the token is single (1) or not (0) (do this later after everything is concatenated)
+# Assigning if the token is single (1) or not (0).
 voice_reports$single <- ifelse(grepl("single", voice_reports$sound.name), 1, 0)
 
 # Assign syllable shapes (do later)
@@ -188,9 +188,9 @@ summary(logit_creaky)
 ### Multinomial Regression to predict the Noise Level.
 ```{r}
 ## Use the multinom function from the nnet package (Ref: https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/)
-library("nnet")
 
-# Use the quiet level as the reference level
+library("nnet")
+# Use the 78 noise level as the reference level
 voice_reports$noise2 <- relevel(voice_reports$noise, ref = "78")
 multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports)
 summary(multinom_noise)
@@ -213,16 +213,47 @@ summary(multinom_noise)
 # A one-unit increase in intensity is associated with the decrease in the
 #log odds of quiet vs. 78 noise level in the amount of 0.35
 # A one-unit increase in intensity is associated with the increase in the
-#log odds of 90 noise vs. 78 noise in the amount of 0.24
+#*log odds of 90 noise vs. 78 noise in the amount of 0.24
 
 ## Giang to double check this result
-# A one-unit increase in spectraltilt is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.066
-# A one-unit increase in spectraltilt is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 0.011
+# A one-unit increase in spectraltilt is associated with the decrease in the
+#log odds of quiet vs. 78 noise level in the amount of 0.066
+# A one-unit increase in spectraltilt is associated with the increase in the
+#log odds of 90 noise vs. 78 noise in the amount of 0.011
 ```
 
-### Clean up undefined values to prepare for KNN analysis.
+### Clean up undefined values to prepare for Classification
 ```{r}
 
+## Method 1: Simply drop values that are undefined in jitter and shimmer variables
+voice_reports_clean <- voice_reports[!(voice_reports$jitter.local==" --undefined-- " | voice_reports$shimmer.local==" --undefined-- " ),]
 
+# Convert two variables to numeric
+voice_reports_clean$jitter.local <- as.numeric(voice_reports_clean$jitter.local)
+voice_reports_clean$shimmer.local <- as.numeric(voice_reports_clean$shimmer.local)
 
+summary(voice_reports_clean)
+
+```
+
+## Classification using SMV (ref https://medium.com/@ODSC/build-a-multi-class-support-vector-machine-in-r-abcdd4b7dab6)
+
+```{r}
+
+library(e1071)   
+set.seed(777)
+n <- nrow(voice_reports_clean)
+ntrain <- round(n*0.75)  # 75% for training set
+tindex <- sample(n, ntrain)
+train <- voice_reports_clean[tindex,c("total.duration", "intensity", "spectraltilt", "mean.F0", "noise", "tone")]
+test <- voice_reports_clean[-tindex,c("total.duration", "intensity", "spectraltilt", "mean.F0", "noise", "tone")]
+
+svm_model <- svm(tone ~ total.duration + intensity + spectraltilt + mean.F0 + noise, data=train, 
+          method="C-classification", kernal="radial", 
+          gamma=0.1, cost=10)
+
+summary(svm_model)
+prediction <- predict(svm_model, test)
+confusion <- table(test$tone, prediction)
+confusion
 ```
