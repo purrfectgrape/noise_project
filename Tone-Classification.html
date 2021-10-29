@@ -615,11 +615,11 @@ set.seed(777)
 n &lt;- nrow(voice_reports_clean)
 ntrain &lt;- round(n*0.75)  # 75% for training set
 tindex &lt;- sample(n, ntrain)
-train &lt;- voice_reports_clean[tindex,c(&quot;total.duration&quot;, &quot;intensity&quot;, &quot;spectraltilt&quot;, &quot;mean.F0&quot;, &quot;noise&quot;, &quot;tone&quot;)]
-test &lt;- voice_reports_clean[-tindex,c(&quot;total.duration&quot;, &quot;intensity&quot;, &quot;spectraltilt&quot;, &quot;mean.F0&quot;, &quot;noise&quot;, &quot;tone&quot;)]
+train &lt;- voice_reports_clean[tindex,c(&quot;total.duration&quot;, &quot;intensity&quot;, &quot;spectraltilt&quot;, &quot;mean.F0&quot;, &quot;noise&quot;, &quot;F1&quot;, &quot;F2&quot;, &quot;tone&quot;)]
+test &lt;- voice_reports_clean[-tindex,c(&quot;total.duration&quot;, &quot;intensity&quot;, &quot;spectraltilt&quot;, &quot;mean.F0&quot;,&quot;noise&quot;, &quot;F1&quot;, &quot;F2&quot;, &quot;tone&quot;)]
 
 # Some factors cause any error probably due to not having the same levels between train and test?
-svm_model &lt;- svm(tone ~ total.duration + intensity + spectraltilt + mean.F0 + noise, data=train, 
+svm_model &lt;- svm(tone ~ total.duration + intensity + spectraltilt + mean.F0 + noise + F1 + F2, data=train, 
           method=&quot;C-classification&quot;, kernal=&quot;radial&quot;, 
           gamma=0.1, cost=10)
 
@@ -627,8 +627,8 @@ summary(svm_model)</code></pre>
 <pre><code>## 
 ## Call:
 ## svm(formula = tone ~ total.duration + intensity + spectraltilt + 
-##     mean.F0 + noise, data = train, method = &quot;C-classification&quot;, kernal = &quot;radial&quot;, 
-##     gamma = 0.1, cost = 10)
+##     mean.F0 + noise + F1 + F2, data = train, method = &quot;C-classification&quot;, 
+##     kernal = &quot;radial&quot;, gamma = 0.1, cost = 10)
 ## 
 ## 
 ## Parameters:
@@ -636,9 +636,9 @@ summary(svm_model)</code></pre>
 ##  SVM-Kernel:  radial 
 ##        cost:  10 
 ## 
-## Number of Support Vectors:  1333
+## Number of Support Vectors:  1330
 ## 
-##  ( 210 258 226 211 204 224 )
+##  ( 211 258 221 209 207 224 )
 ## 
 ## 
 ## Number of Classes:  6 
@@ -650,12 +650,12 @@ confusion &lt;- table(test$tone, prediction)
 confusion</code></pre>
 <pre><code>##     prediction
 ##      A1 A2 B1 B2 C1 C2
-##   A1 26  4 11 10  5 13
-##   A2  1 27  9 10 23  7
-##   B1 15  6 19 27 17 15
-##   B2  1  2  7 70  8 15
-##   C1  4  8  9 19 23  6
-##   C2  7  3  7 12  4 24</code></pre>
+##   A1 25  1 16 11  4 12
+##   A2  2 23 13 11 24  4
+##   B1 19  6 27 22 18  7
+##   B2  3  1  7 73  6 13
+##   C1  3 11 11 13 29  2
+##   C2  5  1 11 10  6 24</code></pre>
 </div>
 
 
