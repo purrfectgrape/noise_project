@@ -618,6 +618,7 @@ tindex &lt;- sample(n, ntrain)
 train &lt;- voice_reports_clean[tindex,c(&quot;total.duration&quot;, &quot;intensity&quot;, &quot;spectraltilt&quot;, &quot;mean.F0&quot;, &quot;noise&quot;, &quot;tone&quot;)]
 test &lt;- voice_reports_clean[-tindex,c(&quot;total.duration&quot;, &quot;intensity&quot;, &quot;spectraltilt&quot;, &quot;mean.F0&quot;, &quot;noise&quot;, &quot;tone&quot;)]
 
+# Some factors cause any error probably due to not having the same levels between train and test?
 svm_model &lt;- svm(tone ~ total.duration + intensity + spectraltilt + mean.F0 + noise, data=train, 
           method=&quot;C-classification&quot;, kernal=&quot;radial&quot;, 
           gamma=0.1, cost=10)

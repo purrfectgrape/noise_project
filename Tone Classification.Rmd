@@ -3,10 +3,10 @@ title: "Tone Classification"
 author: "Giang Le and Helen Kim"
 date: "10/28/2021"
 output:
-  html_document:
-    df_print: paged
   pdf_document: 
     latex_engine: xelatex
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -248,6 +248,7 @@ tindex <- sample(n, ntrain)
 train <- voice_reports_clean[tindex,c("total.duration", "intensity", "spectraltilt", "mean.F0", "noise", "tone")]
 test <- voice_reports_clean[-tindex,c("total.duration", "intensity", "spectraltilt", "mean.F0", "noise", "tone")]
 
+# Some factors cause any error probably due to not having the same levels between train and test?
 svm_model <- svm(tone ~ total.duration + intensity + spectraltilt + mean.F0 + noise, data=train, 
           method="C-classification", kernal="radial", 
           gamma=0.1, cost=10)
