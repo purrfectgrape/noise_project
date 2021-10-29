@@ -1,0 +1,219 @@
+---
+title: "Tone Classification"
+author: "Giang Le and Helen Kim"
+date: "10/28/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Import and Preprocessing
+Our data contains 12 voice reports from 12 recording sessions.
+
+```{r}
+# Read in all the voice reports.
+dataFiles <- lapply(Sys.glob("*/channel1/acoustic_measurements_*.csv"), read.csv)
+```
+
+```{r}
+## Add the following categorical predictors.
+# Gender: F and M (done)
+# Noise type: quiet, 78 or 90 (done)
+# Single token or token in a sentence
+# Syllable type 
+# Tone
+
+# Converting to DataFrames
+
+f_1_78 <- as.data.frame(dataFiles[1])
+f_1_90 <- as.data.frame(dataFiles[2])
+f_1_q <- as.data.frame(dataFiles[3])
+
+m_1_78 <- as.data.frame(dataFiles[4])
+m_1_90 <- as.data.frame(dataFiles[5])
+m_1_q <- as.data.frame(dataFiles[6])
+
+m_2_78 <- as.data.frame(dataFiles[7])
+m_2_90 <- as.data.frame(dataFiles[8])
+m_2_q <- as.data.frame(dataFiles[9])
+
+m_3_78 <- as.data.frame(dataFiles[10])
+m_3_90 <- as.data.frame(dataFiles[11])
+m_3_q <- as.data.frame(dataFiles[12])
+
+# Assigning gender variable (0 for female and 1 for male)
+f_1_78$gender = 0
+f_1_90$gender = 0
+f_1_q$gender = 0
+
+m_1_78$gender = 1
+m_1_90$gender = 1
+m_1_q$gender = 1
+
+m_2_78$gender = 1
+m_2_90$gender = 1
+m_2_q$gender = 1
+
+m_3_78$gender = 1
+m_3_90$gender = 1
+m_3_q$gender = 1
+
+# Assigning noise level
+f_1_78$noise = 78
+f_1_90$noise = 90
+f_1_q$noise = 0
+
+m_1_78$noise = 78
+m_1_90$noise = 90
+m_1_q$noise = 0
+
+m_2_78$noise = 78
+m_2_90$noise = 90
+m_2_q$noise = 0
+
+m_3_78$noise = 78
+m_3_90$noise = 90
+m_3_q$noise = 0
+
+```
+
+```{r}
+### Concatenate all dataframes
+voice_reports <- rbind(f_1_78, f_1_90, f_1_q,
+                       m_1_78, m_1_90, m_1_q,
+                       m_2_78, m_2_90, m_2_q,
+                       m_3_78, m_3_90, m_3_q)
+
+dim(voice_reports)
+```
+
+```{r}
+# Assigning if the token is single (1) or not (0) (do this later after everything is concatenated)
+voice_reports$single <- ifelse(grepl("single", voice_reports$sound.name), 1, 0)
+
+# Assign syllable shapes (do later)
+
+
+# Assign tone values
+voice_reports$tone <- ifelse(grepl("a", voice_reports$sound.name, ignore.case=T), "A1",
+                      ifelse(grepl("à", voice_reports$sound.name, ignore.case=T), "A2",
+                      ifelse(grepl("á", voice_reports$sound.name, ignore.case=T), "B1",
+                      ifelse(grepl("ả", voice_reports$sound.name, ignore.case=T), "C1",
+                      ifelse(grepl("ã", voice_reports$sound.name, ignore.case=T), "C2",
+                      ifelse(grepl("ạ", voice_reports$sound.name, ignore.case=T), "B2",
+                      ifelse(grepl("ê", voice_reports$sound.name, ignore.case=T), "A1",
+                      ifelse(grepl("ề", voice_reports$sound.name, ignore.case=T), "A2",
+                      ifelse(grepl("ế", voice_reports$sound.name, ignore.case=T), "B1",
+                      ifelse(grepl("ể", voice_reports$sound.name, ignore.case=T), "C1",
+                      ifelse(grepl("ễ", voice_reports$sound.name, ignore.case=T), "C2",
+                      ifelse(grepl("ệ", voice_reports$sound.name, ignore.case=T), "B2",
+                      ifelse(grepl("u", voice_reports$sound.name, ignore.case=T), "A1",
+                      ifelse(grepl("ù", voice_reports$sound.name, ignore.case=T), "A2",
+                      ifelse(grepl("ú", voice_reports$sound.name, ignore.case=T), "B1",
+                      ifelse(grepl("ủ", voice_reports$sound.name, ignore.case=T), "C1",
+                      ifelse(grepl("ũ", voice_reports$sound.name, ignore.case=T), "C2",
+                      ifelse(grepl("ụ", voice_reports$sound.name, ignore.case=T), "B2",
+                      ifelse(grepl("ộ", voice_reports$sound.name, ignore.case=T), "B2","NA")))))))))))))))))))
+
+# Assign phonation types
+voice_reports$phonation <- ifelse(grepl("A1", voice_reports$tone, ignore.case=T), "modal",
+                      ifelse(grepl("A2", voice_reports$tone, ignore.case=T), "breathy",
+                      ifelse(grepl("B1", voice_reports$tone, ignore.case=T), "modal",
+                      ifelse(grepl("B2", voice_reports$tone, ignore.case=T), "creaky",
+                      ifelse(grepl("C1", voice_reports$tone, ignore.case=T), "creaky",
+                      ifelse(grepl("C2", voice_reports$tone, ignore.case=T), "creaky","NA"))))))
+
+
+# Assign creakiness or not
+voice_reports$creaky <- ifelse(grepl("creaky", voice_reports$phonation, ignore.case=T), 1, 0)
+head(voice_reports, 100)
+```
+
+### Checking
+```{r}
+# How many values are of each category
+length(voice_reports$tone[voice_reports$tone == "A1"])
+## [1] 574
+length(voice_reports$tone[voice_reports$tone == "A2"])
+## [1] 575
+length(voice_reports$tone[voice_reports$tone == "B1"])
+## [1] 719
+length(voice_reports$tone[voice_reports$tone == "B2"])
+## [1] 768
+length(voice_reports$tone[voice_reports$tone == "C1"])
+## [1] 575
+length(voice_reports$tone[voice_reports$tone == "C2"])
+## [1] 575
+length(voice_reports$tone[voice_reports$tone == "NA"])
+## [1] 0
+```
+
+### Convert categorical values to factors
+```{r}
+## Not sure if this is necessary for variables already binarily coded.
+voice_reports$gender <- as.factor(voice_reports$gender)
+voice_reports$noise <- as.factor(voice_reports$noise)
+voice_reports$tone <- as.factor(voice_reports$tone)
+voice_reports$single <- as.factor(voice_reports$single)
+voice_reports$phonation <- as.factor(voice_reports$phonation)
+voice_reports$creaky <- as.factor(voice_reports$creaky)
+
+```
+
+
+### Summary of current data
+```{r}
+summary(voice_reports)
+```
+
+### Logistic Regression on Gender
+```{r}
+head(voice_reports)
+logit_gender = glm(gender ~ mean.F0 + total.duration + intensity +  mean.HNR, family = "binomial", data=voice_reports)
+summary(logit_gender)
+```
+
+### Logistic Regression on Creaky
+```{r}
+logit_creaky = glm(creaky ~  mean.F0 + total.duration + intensity + spectraltilt + number.pulses + mean.HNR, family = "binomial", data=voice_reports)
+summary(logit_creaky)
+```
+
+### Multinomial Regression to predict the Noise Level.
+```{r}
+## Use the multinom function from the nnet package (Ref: https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/)
+library("nnet")
+
+# Use the quiet level as the reference level
+voice_reports$noise2 <- relevel(voice_reports$noise, ref = "78")
+multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports)
+summary(multinom_noise)
+
+# The result in general supports our predictions regarding the relationship between relative noise levels
+# and F0, duration, intensity, etc.
+
+# For instance,
+# A one-unit increase in mean F0 is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.0133
+# A one-unit increase in mean F0 is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 0.006
+
+# A one-unit increase in duration is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 5.795
+# A one-unit increase in duration is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 2.80
+
+# A one-unit increase in intensity is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.35
+# A one-unit increase in intensity is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 0.24
+
+## Giang to double check this result
+# A one-unit increase in spectraltilt is associated with the decrease in the log odds of quiet vs. 78 noise level in the amount of 0.066
+# A one-unit increase in spectraltilt is associated with the increase in the log odds of 90 noise vs. 78 noise in the amount of 0.011
+```
+
+### Clean up undefined values to prepare for KNN analysis.
+```{r}
+
+
+
+```
