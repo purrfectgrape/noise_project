@@ -7,22 +7,22 @@ form voice report
 		option cc method, costs = 0
 		option Leave settings as they are
 	optionmenu F0_range: 1
-		option MDVP 60-625
+		option MDVP 70-625
 		option MDVP 200-1000
 		option User specified
-	real left_User_specified_F0_range 100
-	real right_User_specified_F0_range 600
+	real left_User_specified_F0_range 60
+	real right_User_specified_F0_range 625
 	real Maximum_period_factor 2
 	real Maximum_amplitude_factor 9
-	word file f-1-78
+	word file f-1-q
 	sentence Save_directory /Users/gianghale/Desktop/ProsodyPro/
-	word User_specified_file_name f-1-78/channel1/acoustic_measurements.csv
+	word User_specified_file_name f-1-q/channel1/acoustic_measurements_unique.csv
 endform
 
 
 # set pitch range -----------------------------------------------------------------
 if f0_range = 1
-	minimum_pitch = 60
+	minimum_pitch = 70
 	maximum_pitch = 625
 elsif f0_range = 2
 	minimum_pitch = 200
@@ -44,9 +44,9 @@ header_row$ = "sound name" + tab$ + "total duration" + tab$ + "intensity" + tab$
 header_row$ > 'save_directory$''user_specified_file_name$'
 
 # get information -----------------------------------------------------------------
-selectObject: "Sound f-1-78_ch1", "TextGrid f-1-78_ch1"
+selectObject: "Sound f-1-q_ch1", "TextGrid f-1-q_ch1_unique"
 # Query the annotated vowels.
-Extract non-empty intervals: 1, "yes"
+Extract non-empty intervals... 1 "yes"
 sounds# = selected# ("Sound")
 for i from 1 to size (sounds#)
 	selectObject: sounds# [i]
@@ -55,7 +55,7 @@ for i from 1 to size (sounds#)
 	duration_total = end - start
 	intensity = Get intensity (dB)
 	name$ = selected$ ("Sound")
-	To Pitch: 0.0, 50, 600
+	To Pitch: 0.0, 70, 625
 	plus Pitch 'name$'
 	plus Sound 'name$'
 	To PointProcess (cc)
