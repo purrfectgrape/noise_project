@@ -1,4 +1,4 @@
-myFolder = '/Users/gianghale/Desktop/ProsodyPro/f-1-90/channel1';
+myFolder = '/Users/gianghale/Desktop/ProsodyPro/m-3-q/channel1';
 myFiles = dir(fullfile(myFolder,'*.wav')); %gets all wav files
 
 for k = 1:length(myFiles)

@@ -1,6 +1,6 @@
 ---
 title: "Tone Classification"
-author: "Giang Le and Helen Kim"
+author: "Giang Le"
 date: "10/28/2021"
 output:
   pdf_document: 
@@ -91,6 +91,11 @@ voice_reports <- rbind(f_1_78, f_1_90, f_1_q,
                        m_3_78, m_3_90, m_3_q)
 
 dim(voice_reports)
+mean(voice_reports$total.duration)
+sd(voice_reports$total.duration)
+min(voice_reports$total.duration)
+max(voice_reports$total.duration)
+summary(voice_reports$total.duration)
 ```
 
 ```{r}
@@ -264,4 +269,13 @@ summary(svm_model)
 prediction <- predict(svm_model, test)
 confusion <- table(test$tone, prediction)
 confusion
+```
+
+### Analysis of the F0 contours extracted from MatLab
+
+```{r}
+
+F0test <- read.table("f-1-78/channel1/F0-test", sep = " ")
+F0test
+
 ```
