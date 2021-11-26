@@ -1,4 +1,4 @@
-myFolder = '\\client\h$\Desktop\ProsodyPro\m-3-78\channel1';
+myFolder = '\\client\h$\Desktop\prelim-data-analysis\m-2-78\channel1';
 myFiles = dir(fullfile(myFolder,'*.wav')); %gets all wav files
 
 for k = 1:length(myFiles)
@@ -8,7 +8,7 @@ for k = 1:length(myFiles)
   [y, Fs] = audioread(fullFileName);
   [f0, ~] = pitchRocco(y, Fs);
   i = 1:length(f0);
-  i_new =  linspace(min(i), max(i), 20);
+  i_new =  linspace(min(i), max(i), 22);
   f0_downsampled = interp1(i, f0, i_new, 'linear');  
   fid= fopen(fullfile(myFolder, 'F0.mat'),'a');
   fprintf(fid, '%s ', baseFileName);

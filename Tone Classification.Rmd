@@ -3,10 +3,10 @@ title: "Tone Classification"
 author: "Giang Le"
 date: "10/28/2021"
 output:
-  pdf_document: 
-    latex_engine: xelatex
   html_document:
     df_print: paged
+  pdf_document: 
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +18,8 @@ Our data contains 12 voice reports from 12 recording sessions.
 
 ```{r}
 # Read in all the voice reports.
-dataFiles <- lapply(Sys.glob("*/channel1/acoustic_measurements_*.csv"), read.csv)
+dataFiles <- lapply(Sys.glob("*/channel1/acoustic_measurements_unique_*.csv"), read.csv)
+dataFiles[1]
 ```
 
 ```{r}
@@ -40,12 +41,12 @@ m_1_90 <- as.data.frame(dataFiles[5])
 m_1_q <- as.data.frame(dataFiles[6])
 
 m_2_78 <- as.data.frame(dataFiles[7])
-m_2_90 <- as.data.frame(dataFiles[8])
-m_2_q <- as.data.frame(dataFiles[9])
+#m_2_90 <- as.data.frame(dataFiles[8])
+#m_2_q <- as.data.frame(dataFiles[9])
 
-m_3_78 <- as.data.frame(dataFiles[10])
-m_3_90 <- as.data.frame(dataFiles[11])
-m_3_q <- as.data.frame(dataFiles[12])
+m_3_78 <- as.data.frame(dataFiles[8])
+m_3_90 <- as.data.frame(dataFiles[9])
+m_3_q <- as.data.frame(dataFiles[10])
 
 # Assigning gender variable (0 for female and 1 for male)
 f_1_78$gender = 0
@@ -57,8 +58,8 @@ m_1_90$gender = 1
 m_1_q$gender = 1
 
 m_2_78$gender = 1
-m_2_90$gender = 1
-m_2_q$gender = 1
+#m_2_90$gender = 1
+#m_2_q$gender = 1
 
 m_3_78$gender = 1
 m_3_90$gender = 1
@@ -74,8 +75,8 @@ m_1_90$noise = 90
 m_1_q$noise = 0
 
 m_2_78$noise = 78
-m_2_90$noise = 90
-m_2_q$noise = 0
+#m_2_90$noise = 90
+#m_2_q$noise = 0
 
 m_3_78$noise = 78
 m_3_90$noise = 90
@@ -87,15 +88,21 @@ m_3_q$noise = 0
 ### Concatenate all dataframes
 voice_reports <- rbind(f_1_78, f_1_90, f_1_q,
                        m_1_78, m_1_90, m_1_q,
-                       m_2_78, m_2_90, m_2_q,
+                       m_2_78, 
+                       #m_2_90, m_2_q,
                        m_3_78, m_3_90, m_3_q)
 
+
+
+## Drop intervals that don't matter
+voice_reports <- voice_reports[!(endsWith(voice_reports$sound.name,"_")),]
 dim(voice_reports)
 mean(voice_reports$total.duration)
 sd(voice_reports$total.duration)
 min(voice_reports$total.duration)
 max(voice_reports$total.duration)
 summary(voice_reports$total.duration)
+head(voice_reports,10)
 ```
 
 ```{r}
@@ -275,7 +282,7 @@ confusion
 
 ```{r}
 
-F0test <- read.table("f-1-78/channel1/F0-test", sep = " ")
+F0test <- read.table("f-1-78/channel1/F0.mat", sep = " ")
 F0test
 
 ```

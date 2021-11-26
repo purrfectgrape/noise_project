@@ -1,0 +1,804 @@
+---
+title: "F0_analysis"
+author: "Giang Le"
+date: "11/5/2021"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "F0 Analysis"
+author: "Giang Le"
+date: "11/05/2021"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+## Plan for Analysis
+- Plot F0 and 95% confidence intervals on aggregate.
+- Plot F0 and 95% confidence intervals by gender, by noise levels, by vowels,
+by vowel and noise levels, by environment (isolation or in a carrier sentence) and also create a regression line for each categorization.
+- Summarize findings & email Yan
+Other notes
+Also leave one speaker out and try classification. If the reslt is good we can
+use it to predict tone produced on what kind of level (leave the noise level aside).
+The noise shouldn't matter much at this stage. (18 levels?)
+look at similarity of tones (using clustering). 
+- plot F1 and F2 and vowel spaces.
+
+
+
+```{r}
+
+# Read in all the F0 contour info. All of these f0.mat files have been downsampled
+# in MatLab during linear interpolation (see getf0.mat in the matlab codes)
+
+# matlab code:
+# myFolder = '\\client\h$\Desktop\ProsodyPro\m-3-78\channel1';
+# myFiles = dir(fullfile(myFolder,'*.wav')); %gets all wav files
+# 
+# for k = 1:length(myFiles)
+#   baseFileName = myFiles(k).name;
+#   fullFileName = fullfile(myFolder, baseFileName);
+#   fprintf(1, 'Now reading %s\n', fullFileName);
+#   [y, Fs] = audioread(fullFileName);
+#   [f0, ~] = pitchRocco(y, Fs);
+#   i = 1:length(f0);
+#   i_new =  linspace(min(i), max(i), 20);
+#   f0_downsampled = interp1(i, f0, i_new, 'linear');  
+#   fid= fopen(fullfile(myFolder, 'F0.mat'),'a');
+#   fprintf(fid, '%s ', baseFileName);
+#   fprintf(fid, '%f ', f0_downsampled);
+#   fprintf(fid,'\n');
+#   fclose(fid);
+# end
+
+# Step 1: Read in all F0.mat files into f0Files and assign a name for each
+
+f0Files <- lapply(Sys.glob("*/channel1/F0.mat"), read.table)
+length(f0Files)
+
+f0_f_1_78 <- as.data.frame(f0Files[1])
+f0_f_1_90 <- as.data.frame(f0Files[2])
+f0_f_1_q <- as.data.frame(f0Files[3])
+f0_m_1_78 <- as.data.frame(f0Files[4])
+f0_m_1_90 <- as.data.frame(f0Files[5])
+f0_m_1_q <- as.data.frame(f0Files[6])
+f0_m_2_78 <- as.data.frame(f0Files[7])
+f0_m_2_90 <- as.data.frame(f0Files[8])
+f0_m_2_q <- as.data.frame(f0Files[9])
+f0_m_3_78 <- as.data.frame(f0Files[10])
+f0_m_3_90 <- as.data.frame(f0Files[11])  
+f0_m_3_q <- as.data.frame(f0Files[12]) 
+
+```
+ 
+ 
+```{r}
+
+# Step 2: Add column names for all dataframes.
+
+numbers <- 1:20
+cols <- c("sound.name",numbers)
+colnames(f0_f_1_78) <- cols
+colnames(f0_f_1_90) <- cols
+colnames(f0_f_1_q) <- cols
+colnames(f0_m_1_78) <- cols
+colnames(f0_m_1_90) <- cols
+colnames(f0_m_1_q) <- cols
+colnames(f0_m_2_78) <- cols
+colnames(f0_m_2_90) <- cols
+colnames(f0_m_2_q) <- cols
+colnames(f0_m_3_78) <- cols
+colnames(f0_m_3_90) <- cols
+colnames(f0_m_3_q) <- cols
+
+
+# Assigning noise level
+f0_f_1_78$noise = 78
+f0_f_1_90$noise = 90
+f0_f_1_q$noise = 0
+
+f0_m_1_78$noise = 78
+f0_m_1_90$noise = 90
+f0_m_1_q$noise = 0
+
+f0_m_2_78$noise = 78
+f0_m_2_90$noise = 90
+f0_m_2_q$noise = 0
+
+f0_m_3_78$noise = 78
+f0_m_3_90$noise = 90
+f0_m_3_q$noise = 0
+
+
+# Assigning gender variable (0 for female and 1 for male)
+f0_f_1_78$gender = 0
+f0_f_1_90$gender = 0
+f0_f_1_q$gender = 0
+
+f0_m_1_78$gender = 1
+f0_m_1_90$gender = 1
+f0_m_1_q$gender = 1
+
+f0_m_2_78$gender = 1
+f0_m_2_90$gender = 1
+f0_m_2_q$gender = 1
+
+f0_m_3_78$gender = 1
+f0_m_3_90$gender = 1
+f0_m_3_q$gender = 1
+
+
+### Concatenate all dataframes
+f0_reports <- rbind(f0_f_1_78, f0_f_1_90, f0_f_1_q,
+f0_m_1_78, f0_m_1_90, f0_m_1_q,
+f0_m_2_78, f0_m_2_90, f0_m_2_q,
+f0_m_3_78, f0_m_3_90, f0_m_3_q)
+
+```
+
+According to the report, this dataframe has 3786 records. In total, from 4 speakers,
+we have 3786 sound segments to analyze.
+
+```{r}
+
+# Assign tone values.
+
+# Extracting a substring that contains only the syllable names.
+nameswithoutwav <- sapply(strsplit(f0_reports[,1], split=".", fixed=TRUE), "[", 1)
+f0_reports$syllable.names <- sapply(strsplit(nameswithoutwav, split="_", fixed=TRUE), "[", 1)
+
+f0_reports$tone <- ifelse(grepl("a", f0_reports$syllable.name, ignore.case=T), "A1",
+ifelse(grepl("^tát", f0_reports$syllable.name, ignore.case=T), "D1",
+ifelse(grepl("^tạt", f0_reports$syllable.name, ignore.case=T), "D2",
+ifelse(grepl("^tết", f0_reports$syllable.name, ignore.case=T), "D1",
+ifelse(grepl("^tệt", f0_reports$syllable.name, ignore.case=T), "D2",
+ifelse(grepl("^tút", f0_reports$syllable.name, ignore.case=T), "D1",
+ifelse(grepl("^tụt", f0_reports$syllable.name, ignore.case=T), "D2",
+ifelse(grepl("à", f0_reports$syllable.name, ignore.case=T), "A2",
+ifelse(grepl("á", f0_reports$syllable.name, ignore.case=T), "B1",
+ifelse(grepl("ả", f0_reports$syllable.name, ignore.case=T), "C1",
+ifelse(grepl("ã", f0_reports$syllable.name, ignore.case=T), "C2",
+ifelse(grepl("ạ", f0_reports$syllable.name, ignore.case=T), "B2",
+ifelse(grepl("ê", f0_reports$syllable.name, ignore.case=T), "A1",
+ifelse(grepl("ề", f0_reports$syllable.name, ignore.case=T), "A2",
+ifelse(grepl("ế", f0_reports$syllable.name, ignore.case=T), "B1",
+ifelse(grepl("ể", f0_reports$syllable.name, ignore.case=T), "C1",
+ifelse(grepl("ễ", f0_reports$syllable.name, ignore.case=T), "C2",
+ifelse(grepl("ệ", f0_reports$syllable.name, ignore.case=T), "B2",
+ifelse(grepl("u", f0_reports$syllable.name, ignore.case=T), "A1",
+ifelse(grepl("ù", f0_reports$syllable.name, ignore.case=T), "A2",
+ifelse(grepl("ú", f0_reports$syllable.name, ignore.case=T), "B1",
+ifelse(grepl("ủ", f0_reports$syllable.name, ignore.case=T), "C1",
+ifelse(grepl("ũ", f0_reports$syllable.name, ignore.case=T), "C2",
+ifelse(grepl("ụ", f0_reports$syllable.name, ignore.case=T), "B2",
+ifelse(grepl("ộ", f0_reports$syllable.name, ignore.case=T), "B2","NA")))))))))))))))))))))))))
+
+# Assigning if the token is single (1) or not (0). Single tokens were produced in isolation.
+# Otherwise they were produced in carrier sentences.
+f0_reports$single <- ifelse(grepl("single", f0_reports$sound.name), 1, 0)
+
+# Convert categorical variables to factor levels.
+f0_reports$gender <- as.factor(f0_reports$gender)
+f0_reports$single <- as.factor(f0_reports$single)
+f0_reports$tone <- as.factor(f0_reports$tone)
+f0_reports$noise <- as.factor(f0_reports$noise)
+
+summary(f0_reports)
+
+```
+
+
+## Aggregate Tone Analysis
+
+### F0 Plots
+```{r}
+
+# Note that I only plot the 2nd to 19th sampled points.
+# Extract F0 of all tones A1 (574 instances)
+par(mfrow=c(2,4))
+A1 <- data.matrix(f0_reports[f0_reports$tone=="A1",-c(1,c(22:26))])
+plot(colMeans(A1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 200))
+
+# # Do the same for the other tones
+A2 <- data.matrix(f0_reports[f0_reports$tone=="A2",-c(1,c(22:26))])
+plot(colMeans(A2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 200))
+
+B1 <- data.matrix(f0_reports[f0_reports$tone=="B1",-c(1,c(22:26))])
+plot(colMeans(B1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 200))
+
+B2 <- data.matrix(f0_reports[f0_reports$tone=="B2",-c(1,c(22:26))])
+plot(colMeans(B2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+
+C1 <- data.matrix(f0_reports[f0_reports$tone=="C1",-c(1,c(22:26))])
+plot(colMeans(C1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+
+C2 <- data.matrix(f0_reports[f0_reports$tone=="C2",-c(1,c(22:26))])
+plot(colMeans(C2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+
+D1 <- data.matrix(f0_reports[f0_reports$tone=="D1",-c(1,c(22:26))])
+plot(colMeans(D1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+
+D2 <- data.matrix(f0_reports[f0_reports$tone=="D2",-c(1,c(22:26))])
+plot(colMeans(D2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+```
+
+### F0 contours on the same plot.
+```{r}
+plot(colMeans(A1)[2:19], type="b", xlim=c(1, 18), ylim=c(60, 200))
+lines(colMeans(A2)[2:19],col="green", type="b", pch=19)
+lines(colMeans(B1)[2:19],col="red",  type="b", pch=19)
+lines(colMeans(B2)[2:19],col="purple", type="b",  pch=19)
+lines(colMeans(C1)[2:19],col="blue",  type="b", pch=19)
+lines(colMeans(C2)[2:19],col="orange",  type="b", pch=19)
+
+# Add a legend
+legend(1, 100, legend=c("A1", "A2", "B1", "B2", "C1", "C2"),
+       col=c("black", "green", "red", "purple", "blue", "orange"), lty=1:2, cex=0.7)
+```
+
+
+
+Plot B1, B2, D1, D2 together.
+
+```{r}
+plot(colMeans(B1)[2:19], type="b", col="blue", xlim=c(1, 18), ylim=c(60, 200))
+lines(colMeans(B2)[2:19],col="purple", type="b",  pch=19)
+lines(colMeans(D1)[2:19],col="pink",  type="b", pch=19)  ## D1 has a very strange contour.
+lines(colMeans(D2)[2:19],col="black",  type="b", pch=19)
+
+# Add a legend
+legend(1, 100, legend=c("B1", "B2", "D1", "D2"),
+       col=c("blue", "orange", "pink", "black"), lty=1:2, cex=0.7)
+```
+
+### Estimate Regression Lines for Each Tone on Aggregate.
+```{r}
+
+regression_report <- function(tone) {
+  lm_tone <- lm(colMeans(tone)[2:19]~ c(1:18))
+  plot(colMeans(tone)[2:19], pch = 16, cex = 1.3, xlim=c(1, 18), ylim=c(60, 250))
+  abline(lm(colMeans(tone)[2:19] ~ c(1:18)))
+  return(lm_tone)
+}
+
+```
+
+```{r}
+## Call regression_report on all tones.
+regression_report(A1)
+regression_report(A2)
+regression_report(B1)
+regression_report(B2)
+regression_report(C1)
+regression_report(C2)
+regression_report(D1)
+regression_report(D2)
+
+```
+## Tone Contour Analysis on Different Noise Levels (Separately by Single vs. Tokens in Carriers)
+
+```{r}
+# Plot F0 contours according to different levels
+
+filter_f0 <- function(tone, noise, s) {
+  if (s==TRUE) {
+    tone_matrix <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise==noise & f0_reports$single=="1",-c(1,c(22:26))])
+    return(tone_matrix)
+  } else {
+    tone_matrix <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise==noise & f0_reports$single=="0",-c(1,c(22:26))])
+    return(tone_matrix)
+  }
+}
+
+plot_f0_by_noise <- function(tone, s) {
+  if (s==TRUE) {
+    tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$single=="1",-c(1,c(22:26))])
+  tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$single=="1",-c(1,c(22:26))])
+  tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$single=="1",-c(1,c(22:26))])
+  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
+  lines(colMeans(tone_78)[2:19],col="green")
+  lines(colMeans(tone_90)[2:19],col="red")
+  # Find regression coefficients and return them.
+  c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
+  } else {
+    tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$single=="0",-c(1,c(22:26))])
+  tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$single=="0",-c(1,c(22:26))])
+  tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$single=="0",-c(1,c(22:26))])
+  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
+  lines(colMeans(tone_78)[2:19],col="green")
+  lines(colMeans(tone_90)[2:19],col="red")
+  c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
+  }
+}
+
+coefficient_reports <- function(tone_matrix) {
+  lm_model <- lm(colMeans(tone_matrix)[2:19] ~ c(1:18))
+  summary(lm_model)$coefficients[2,1]
+}
+```
+
+### F0 and regression line for tone A1, single tokens.
+```{r}
+plot_f0_by_noise("A1", TRUE)
+```
+
+
+### F0 and regression line for tone A2, single tokens.
+```{r}
+plot_f0_by_noise("A2",TRUE)
+```
+
+
+### F0 and regression line for tone B1, single tokens.
+```{r}
+plot_f0_by_noise("B1", TRUE)
+```
+
+
+### F0 and regression line for tone B2, single tokens.
+```{r}
+plot_f0_by_noise("B2",TRUE)
+```
+
+### F0 and regression line for tone C1, single tokens.
+```{r}
+plot_f0_by_noise("C1",TRUE)
+```
+
+###F0 and regression line for tone C2, single tokens.
+```{r}
+plot_f0_by_noise("C2", TRUE)
+```
+
+### F0 and regression line for tone D1, single tokens.
+```{r}
+plot_f0_by_noise("D1",TRUE)
+```
+
+### F0 and regression line for tone D2, single tokens.
+```{r}
+plot_f0_by_noise("D2", TRUE)
+```
+
+### F0 and regression line for tone A1, tokens in carriers.
+```{r}
+plot_f0_by_noise("A1", FALSE)
+```
+
+### F0 and regression line for tone A2, tokens in carriers.
+```{r}
+plot_f0_by_noise("A2",FALSE)
+```
+
+### F0 and regression line for tone B1, tokens in carriers.
+```{r}
+plot_f0_by_noise("B1", FALSE)
+```
+
+### F0 and regression line for tone B2, tokens in carriers.
+```{r}
+plot_f0_by_noise("B2",FALSE)
+```
+
+### F0 and regression line for tone C1, tokens in carriers.
+```{r}
+plot_f0_by_noise("C1",FALSE)
+```
+
+### F0 and regression line for tone C2, tokens in carriers.
+```{r}
+plot_f0_by_noise("C2", FALSE)
+```
+
+### F0 and regression line for tone D1, tokens in carriers.
+```{r}
+plot_f0_by_noise("D1",FALSE)
+```
+
+### F0 and regression line for tone D2, tokens in carriers.
+```{r}
+plot_f0_by_noise("D2", FALSE)
+```
+
+## All coefficients together in a table.
+```{r}
+# Table of tone * noise (20x3)
+tab <- matrix(,nrow=16, ncol=3, byrow=TRUE)
+colnames(tab) <- c('quiet','noise 78','noise 90')
+rownames(tab) <- c('A1 single','A2 single','B1 single', 'B2 single',
+                   'C1 single','C2 single','D1 single', 'D2 single',
+                   'A1 carrier','A2 carrier','B1 carrier', 'B2 carrier',
+                   'C1 carrier','C2 carrier','D1 carrier', 'D2 carrier')
+tab <- as.table(tab)
+tab[1,1] = coefficient_reports(filter_f0("A1", "0", TRUE))
+tab[1,2] = coefficient_reports(filter_f0("A1", "78", TRUE))
+tab[1,3] = coefficient_reports(filter_f0("A1", "90", TRUE))
+
+tab[2,1] = coefficient_reports(filter_f0("A2", "0", TRUE))
+tab[2,2] = coefficient_reports(filter_f0("A2", "78", TRUE))
+tab[2,3] = coefficient_reports(filter_f0("A2", "90", TRUE))
+
+tab[3,1] = coefficient_reports(filter_f0("B1", "0", TRUE))
+tab[3,2] = coefficient_reports(filter_f0("B1", "78", TRUE))
+tab[3,3] = coefficient_reports(filter_f0("B1", "90", TRUE))
+
+tab[4,1] = coefficient_reports(filter_f0("B2", "0", TRUE))
+tab[4,2] = coefficient_reports(filter_f0("B2", "78", TRUE))
+tab[4,3] = coefficient_reports(filter_f0("B2", "90", TRUE))
+
+tab[5,1] = coefficient_reports(filter_f0("C1", "0", TRUE))
+tab[5,2] = coefficient_reports(filter_f0("C1", "78", TRUE))
+tab[5,3] = coefficient_reports(filter_f0("C1", "90", TRUE))
+
+tab[6,1] = coefficient_reports(filter_f0("C2", "0", TRUE))
+tab[6,2] = coefficient_reports(filter_f0("C2", "78", TRUE))
+tab[6,3] = coefficient_reports(filter_f0("C2", "90", TRUE))
+
+tab[7,1] = coefficient_reports(filter_f0("D1", "0", TRUE))
+tab[7,2] = coefficient_reports(filter_f0("D1", "78", TRUE))
+tab[7,3] = coefficient_reports(filter_f0("D1", "90", TRUE))
+
+tab[8,1] = coefficient_reports(filter_f0("D2", "0", TRUE))
+tab[8,2] = coefficient_reports(filter_f0("D2", "78", TRUE))
+tab[8,3] = coefficient_reports(filter_f0("D2", "90", TRUE))
+
+# carrier
+tab[9,1] = coefficient_reports(filter_f0("A1", "0", FALSE))
+tab[9,2] = coefficient_reports(filter_f0("A1", "78", FALSE))
+tab[9,3] = coefficient_reports(filter_f0("A1", "90", FALSE))
+
+tab[10,1] = coefficient_reports(filter_f0("A2", "0", FALSE))
+tab[10,2] = coefficient_reports(filter_f0("A2", "78", FALSE))
+tab[10,3] = coefficient_reports(filter_f0("A2", "90", FALSE))
+
+tab[11,1] = coefficient_reports(filter_f0("B1", "0", FALSE))
+tab[11,2] = coefficient_reports(filter_f0("B1", "78", FALSE))
+tab[11,3] = coefficient_reports(filter_f0("B1", "90", FALSE))
+
+tab[12,1] = coefficient_reports(filter_f0("B2", "0", FALSE))
+tab[12,2] = coefficient_reports(filter_f0("B2", "78", FALSE))
+tab[12,3] = coefficient_reports(filter_f0("B2", "90", FALSE))
+
+tab[13,1] = coefficient_reports(filter_f0("C1", "0", FALSE))
+tab[13,2] = coefficient_reports(filter_f0("C1", "78", FALSE))
+tab[13,3] = coefficient_reports(filter_f0("C1", "90", FALSE))
+
+tab[14,1] = coefficient_reports(filter_f0("C2", "0", FALSE))
+tab[14,2] = coefficient_reports(filter_f0("C2", "78", FALSE))
+tab[14,3] = coefficient_reports(filter_f0("C2", "90", FALSE))
+
+tab[15,1] = coefficient_reports(filter_f0("D1", "0", FALSE))
+tab[15,2] = coefficient_reports(filter_f0("D1", "78", FALSE))
+tab[15,3] = coefficient_reports(filter_f0("D1", "90", FALSE))
+
+tab[16,1] = coefficient_reports(filter_f0("D2", "0", FALSE))
+tab[16,2] = coefficient_reports(filter_f0("D2", "78", FALSE))
+tab[16,3] = coefficient_reports(filter_f0("D2", "90", FALSE))
+
+tab
+```
+
+## Tone Contour Analysis on Different Noise Levels on Vowel A.
+```{r}
+
+# Add vowel annotation.
+
+f0_reports$vowel <- ifelse(grepl("a", f0_reports$syllable.name, ignore.case=T), "A",
+ifelse(grepl("à", f0_reports$syllable.name, ignore.case=T), "A",
+ifelse(grepl("á", f0_reports$syllable.name, ignore.case=T), "A",
+ifelse(grepl("ả", f0_reports$syllable.name, ignore.case=T), "A",
+ifelse(grepl("ã", f0_reports$syllable.name, ignore.case=T), "A",
+ifelse(grepl("ạ", f0_reports$syllable.name, ignore.case=T), "A",
+ifelse(grepl("ê", f0_reports$syllable.name, ignore.case=T), "E",
+ifelse(grepl("ề", f0_reports$syllable.name, ignore.case=T), "E",
+ifelse(grepl("ế", f0_reports$syllable.name, ignore.case=T), "E",
+ifelse(grepl("ể", f0_reports$syllable.name, ignore.case=T), "E",
+ifelse(grepl("ễ", f0_reports$syllable.name, ignore.case=T), "E",
+ifelse(grepl("ệ", f0_reports$syllable.name, ignore.case=T), "E",
+ifelse(grepl("u", f0_reports$syllable.name, ignore.case=T), "U",
+ifelse(grepl("ù", f0_reports$syllable.name, ignore.case=T), "U",
+ifelse(grepl("ú", f0_reports$syllable.name, ignore.case=T), "U",
+ifelse(grepl("ủ", f0_reports$syllable.name, ignore.case=T), "U",
+ifelse(grepl("ũ", f0_reports$syllable.name, ignore.case=T), "U",
+ifelse(grepl("ụ", f0_reports$syllable.name, ignore.case=T), "U",
+ifelse(grepl("ộ", f0_reports$syllable.name, ignore.case=T), "O","NA")))))))))))))))))))
+
+# Convert vowel types to a factor variable
+f0_reports$vowel <- as.factor(f0_reports$vowel)
+head(f0_reports, 30)
+```
+
+
+
+```{r}
+# Plot F0 contour by vowels (not distinguishing single tokens or tokens in carriers.)
+
+plot_f0_by_vowels <- function(tone, vowel) {
+  if (vowel=="A") {
+    tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$vowel=="A",-c(1,c(22:26))])
+  tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$vowel=="A",-c(1,c(22:26))])
+  tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$vowel=="A",-c(1,c(22:26))])
+  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
+  lines(colMeans(tone_78)[2:19],col="green")
+  lines(colMeans(tone_90)[2:19],col="red")
+  # Find regression coefficients and return them.
+  c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
+  } else if (vowel=="E") {
+    tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$vowel=="E",-c(1,c(22:26))])
+  tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$vowel=="E",-c(1,c(22:26))])
+  tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$vowel=="E",-c(1,c(22:26))])
+  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
+  lines(colMeans(tone_78)[2:19],col="green")
+  lines(colMeans(tone_90)[2:19],col="red")
+  # Find regression coefficients and return them.
+  c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
+  } else {
+  tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$vowel=="U",-c(1,c(22:26))])
+  tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$vowel=="U",-c(1,c(22:26))])
+  tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$vowel=="U",-c(1,c(22:26))])
+  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
+  lines(colMeans(tone_78)[2:19],col="green")
+  lines(colMeans(tone_90)[2:19],col="red")
+  # Find regression coefficients and return them.
+  c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
+  }
+}
+
+# Call functions
+
+```
+
+
+## Tone A1 on A
+```{r}
+plot_f0_by_vowels("A1", "A")
+```
+
+## Tone A1 on E
+```{r}
+plot_f0_by_vowels("A1", "E")
+```
+
+## Tone A1 on U
+```{r}
+plot_f0_by_vowels("A1", "U")
+```
+
+## Tone A2 on A
+```{r}
+plot_f0_by_vowels("A2", "A")
+```
+
+## Tone A2 on E
+```{r}
+plot_f0_by_vowels("A2", "E")
+```
+
+## Tone A2 on U
+```{r}
+plot_f0_by_vowels("A2", "U")
+```
+
+
+## Tone B1 on A
+```{r}
+plot_f0_by_vowels("B1", "A")
+```
+
+## Tone B1 on E
+```{r}
+plot_f0_by_vowels("B1", "E")
+```
+
+## Tone B1 on U
+```{r}
+plot_f0_by_vowels("B1", "U")
+```
+
+## Tone B2 on A
+```{r}
+plot_f0_by_vowels("B2", "A")
+```
+
+## Tone B2 on E
+```{r}
+plot_f0_by_vowels("B2", "E")
+```
+
+## Tone B2 on U
+```{r}
+plot_f0_by_vowels("B2", "U")
+```
+
+## Tone C1 on A
+```{r}
+plot_f0_by_vowels("C1", "A")
+```
+
+## Tone C1 on E
+```{r}
+plot_f0_by_vowels("C1", "E")
+```
+
+## Tone C1 on U
+```{r}
+plot_f0_by_vowels("C1", "U")
+```
+
+## Tone C2 on A
+```{r}
+plot_f0_by_vowels("C2", "A")
+```
+
+## Tone C2 on E
+```{r}
+plot_f0_by_vowels("C2", "E")
+```
+
+## Tone C2 on U
+```{r}
+plot_f0_by_vowels("C2", "U")
+```
+
+
+## Tone D1 on A
+```{r}
+plot_f0_by_vowels("D1", "A")
+```
+
+## Tone D1 on E
+```{r}
+plot_f0_by_vowels("D1", "E")
+```
+
+## Tone D1 on U
+```{r}
+plot_f0_by_vowels("D1", "U")
+```
+
+## Tone D2 on A
+```{r}
+plot_f0_by_vowels("D2", "A")
+```
+
+## Tone D2 on E
+```{r}
+plot_f0_by_vowels("D2", "E")
+```
+
+## Tone D2 on U
+```{r}
+plot_f0_by_vowels("D2", "U")
+```
+
+### Slope coefficients in a table
+# Plot F0 contours according to different levels
+
+```{r}
+filter_f0 <- function(tone, vowel, noise) {
+    tone_matrix <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise==noise & f0_reports$vowel==vowel,-c(1,c(22:26))])
+    return(tone_matrix)
+}
+
+# Table of tone * noise (24x3)
+tab_vowel <- matrix(,nrow=24, ncol=3, byrow=TRUE)
+colnames(tab_vowel) <- c('quiet','noise 78','noise 90')
+rownames(tab_vowel) <- c('A1 A','A2 A','B1 A', 'B2 A',
+                   'C1 A','C2 A','D1 A', 'D2 A',
+                   'A1 E','A2 E','B1 E', 'B2 E',
+                   'C1 E','C2 E','D1 E', 'D2 E',
+                   'A1 U','A2 U','B1 U', 'B2 U',
+                   'C1 U','C2 U','D1 U', 'D2 U')
+tab_vowel <- as.table(tab_vowel)
+tab_vowel[1,1] = coefficient_reports(filter_f0("A1", "A", "0"))
+tab_vowel[1,2] = coefficient_reports(filter_f0("A1", "A", "78"))
+tab_vowel[1,3] = coefficient_reports(filter_f0("A1", "A", "90"))
+
+tab_vowel[2,1] = coefficient_reports(filter_f0("A2", "A", "0"))
+tab_vowel[2,2] = coefficient_reports(filter_f0("A2", "A", "78"))
+tab_vowel[2,3] = coefficient_reports(filter_f0("A2", "A", "90"))
+
+tab_vowel[3,1] = coefficient_reports(filter_f0("B1", "A", "0"))
+tab_vowel[3,2] = coefficient_reports(filter_f0("B1", "A", "78"))
+tab_vowel[3,3] = coefficient_reports(filter_f0("B1", "A", "90"))
+
+tab_vowel[4,1] = coefficient_reports(filter_f0("B2", "A", "0"))
+tab_vowel[4,2] = coefficient_reports(filter_f0("B2", "A", "78"))
+tab_vowel[4,3] = coefficient_reports(filter_f0("B2", "A", "90"))
+
+tab_vowel[5,1] = coefficient_reports(filter_f0("C1", "A", "0"))
+tab_vowel[5,2] = coefficient_reports(filter_f0("C1", "A", "78"))
+tab_vowel[5,3] = coefficient_reports(filter_f0("C1", "A", "90"))
+
+tab_vowel[6,1] = coefficient_reports(filter_f0("C2", "A", "0"))
+tab_vowel[6,2] = coefficient_reports(filter_f0("C2", "A", "78"))
+tab_vowel[6,3] = coefficient_reports(filter_f0("C2", "A", "90"))
+
+tab_vowel[7,1] = coefficient_reports(filter_f0("D1", "A", "0"))
+tab_vowel[7,2] = coefficient_reports(filter_f0("D1", "A", "78"))
+tab_vowel[7,3] = coefficient_reports(filter_f0("D1", "A", "90"))
+
+tab_vowel[8,1] = coefficient_reports(filter_f0("D2", "A", "0"))
+tab_vowel[8,2] = coefficient_reports(filter_f0("D2", "A", "78"))
+tab_vowel[8,3] = coefficient_reports(filter_f0("D2", "A", "90"))
+
+tab_vowel[9,1] = coefficient_reports(filter_f0("A1", "E", "0"))
+tab_vowel[9,2] = coefficient_reports(filter_f0("A1", "E", "78"))
+tab_vowel[9,3] = coefficient_reports(filter_f0("A1", "E", "90"))
+
+tab_vowel[10,1] = coefficient_reports(filter_f0("A2", "E", "0"))
+tab_vowel[10,2] = coefficient_reports(filter_f0("A2", "E", "78"))
+tab_vowel[10,3] = coefficient_reports(filter_f0("A2", "E", "90"))
+
+tab_vowel[11,1] = coefficient_reports(filter_f0("B1", "E", "0"))
+tab_vowel[11,2] = coefficient_reports(filter_f0("B1", "E", "78"))
+tab_vowel[11,3] = coefficient_reports(filter_f0("B1", "E", "90"))
+
+tab_vowel[12,1] = coefficient_reports(filter_f0("B2", "E", "0"))
+tab_vowel[12,2] = coefficient_reports(filter_f0("B2", "E", "78"))
+tab_vowel[12,3] = coefficient_reports(filter_f0("B2", "E", "90"))
+
+tab_vowel[13,1] = coefficient_reports(filter_f0("C1", "E", "0"))
+tab_vowel[13,2] = coefficient_reports(filter_f0("C1", "E", "78"))
+tab_vowel[13,3] = coefficient_reports(filter_f0("C1", "E", "90"))
+
+tab_vowel[14,1] = coefficient_reports(filter_f0("C2", "E", "0"))
+tab_vowel[14,2] = coefficient_reports(filter_f0("C2", "E", "78"))
+tab_vowel[14,3] = coefficient_reports(filter_f0("C2", "E", "90"))
+
+tab_vowel[15,1] = coefficient_reports(filter_f0("D1", "E", "0"))
+tab_vowel[15,2] = coefficient_reports(filter_f0("D1", "E", "78"))
+tab_vowel[15,3] = coefficient_reports(filter_f0("D1", "E", "90"))
+
+tab_vowel[16,1] = coefficient_reports(filter_f0("D2", "E", "0"))
+tab_vowel[16,2] = coefficient_reports(filter_f0("D2", "E", "78"))
+tab_vowel[16,3] = coefficient_reports(filter_f0("D2", "E", "90"))
+
+tab_vowel[17,1] = coefficient_reports(filter_f0("A1", "U", "0"))
+tab_vowel[17,2] = coefficient_reports(filter_f0("A1", "U", "78"))
+tab_vowel[17,3] = coefficient_reports(filter_f0("A1", "U", "90"))
+
+tab_vowel[18,1] = coefficient_reports(filter_f0("A2", "U", "0"))
+tab_vowel[18,2] = coefficient_reports(filter_f0("A2", "U", "78"))
+tab_vowel[18,3] = coefficient_reports(filter_f0("A2", "U", "90"))
+
+tab_vowel[19,1] = coefficient_reports(filter_f0("B1", "U", "0"))
+tab_vowel[19,2] = coefficient_reports(filter_f0("B1", "U", "78"))
+tab_vowel[19,3] = coefficient_reports(filter_f0("B1", "U", "90"))
+
+tab_vowel[20,1] = coefficient_reports(filter_f0("B2", "U", "0"))
+tab_vowel[20,2] = coefficient_reports(filter_f0("B2", "U", "78"))
+tab_vowel[20,3] = coefficient_reports(filter_f0("B2", "U", "90"))
+
+tab_vowel[21,1] = coefficient_reports(filter_f0("C1", "U", "0"))
+tab_vowel[21,2] = coefficient_reports(filter_f0("C1", "U", "78"))
+tab_vowel[21,3] = coefficient_reports(filter_f0("C1", "U", "90"))
+
+tab_vowel[22,1] = coefficient_reports(filter_f0("C2", "U", "0"))
+tab_vowel[22,2] = coefficient_reports(filter_f0("C2", "U", "78"))
+tab_vowel[22,3] = coefficient_reports(filter_f0("C2", "U", "90"))
+
+tab_vowel[23,1] = coefficient_reports(filter_f0("D1", "U", "0"))
+tab_vowel[23,2] = coefficient_reports(filter_f0("D1", "U", "78"))
+tab_vowel[23,3] = coefficient_reports(filter_f0("D1", "U", "90"))
+
+tab_vowel[24,1] = coefficient_reports(filter_f0("D2", "U", "0"))
+tab_vowel[24,2] = coefficient_reports(filter_f0("D2", "U", "78"))
+tab_vowel[24,3] = coefficient_reports(filter_f0("D2", "U", "90"))
+
+
+tab_vowel
+
+
+```
