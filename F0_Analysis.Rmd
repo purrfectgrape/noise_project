@@ -70,15 +70,18 @@ length(f0Files)
 f0_f_1_78 <- as.data.frame(f0Files[1])
 f0_f_1_90 <- as.data.frame(f0Files[2])
 f0_f_1_q <- as.data.frame(f0Files[3])
-f0_m_1_78 <- as.data.frame(f0Files[4])
-f0_m_1_90 <- as.data.frame(f0Files[5])
-f0_m_1_q <- as.data.frame(f0Files[6])
-f0_m_2_78 <- as.data.frame(f0Files[7])
-f0_m_2_90 <- as.data.frame(f0Files[8])
-f0_m_2_q <- as.data.frame(f0Files[9])
-f0_m_3_78 <- as.data.frame(f0Files[10])
-f0_m_3_90 <- as.data.frame(f0Files[11])  
-f0_m_3_q <- as.data.frame(f0Files[12]) 
+f0_f_2_78 <- as.data.frame(f0Files[4])
+f0_f_2_90 <- as.data.frame(f0Files[5])
+f0_f_2_q <- as.data.frame(f0Files[6])
+f0_m_1_78 <- as.data.frame(f0Files[7])
+f0_m_1_90 <- as.data.frame(f0Files[8])
+f0_m_1_q <- as.data.frame(f0Files[9])
+f0_m_2_78 <- as.data.frame(f0Files[10])
+f0_m_2_90 <- as.data.frame(f0Files[11])
+f0_m_2_q <- as.data.frame(f0Files[12])
+f0_m_3_78 <- as.data.frame(f0Files[13])
+f0_m_3_90 <- as.data.frame(f0Files[14])  
+f0_m_3_q <- as.data.frame(f0Files[15]) 
 
 ```
  
@@ -87,11 +90,14 @@ f0_m_3_q <- as.data.frame(f0Files[12])
 
 # Step 2: Add column names for all dataframes.
 
-numbers <- 1:20
+numbers <- 1:22
 cols <- c("sound.name",numbers)
 colnames(f0_f_1_78) <- cols
 colnames(f0_f_1_90) <- cols
 colnames(f0_f_1_q) <- cols
+colnames(f0_f_2_78) <- cols
+colnames(f0_f_2_90) <- cols
+colnames(f0_f_2_q) <- cols
 colnames(f0_m_1_78) <- cols
 colnames(f0_m_1_90) <- cols
 colnames(f0_m_1_q) <- cols
@@ -107,6 +113,10 @@ colnames(f0_m_3_q) <- cols
 f0_f_1_78$noise = 78
 f0_f_1_90$noise = 90
 f0_f_1_q$noise = 0
+
+f0_f_2_78$noise = 78
+f0_f_2_90$noise = 90
+f0_f_2_q$noise = 0
 
 f0_m_1_78$noise = 78
 f0_m_1_90$noise = 90
@@ -126,6 +136,10 @@ f0_f_1_78$gender = 0
 f0_f_1_90$gender = 0
 f0_f_1_q$gender = 0
 
+f0_f_2_78$gender = 0
+f0_f_2_90$gender = 0
+f0_f_2_q$gender = 0
+
 f0_m_1_78$gender = 1
 f0_m_1_90$gender = 1
 f0_m_1_q$gender = 1
@@ -141,14 +155,16 @@ f0_m_3_q$gender = 1
 
 ### Concatenate all dataframes
 f0_reports <- rbind(f0_f_1_78, f0_f_1_90, f0_f_1_q,
+                    f0_f_2_78, f0_f_2_90, f0_f_2_q,
 f0_m_1_78, f0_m_1_90, f0_m_1_q,
 f0_m_2_78, f0_m_2_90, f0_m_2_q,
 f0_m_3_78, f0_m_3_90, f0_m_3_q)
 
+dim(f0_reports)
 ```
 
-According to the report, this dataframe has 3786 records. In total, from 4 speakers,
-we have 3786 sound segments to analyze.
+According to the report, this dataframe has 4,732 records. In total, from 5 speakers,
+we have 4732 sound segments to analyze.
 
 ```{r}
 
@@ -208,39 +224,38 @@ summary(f0_reports)
 # Extract F0 of all tones A1 (574 instances)
 par(mfrow=c(2,4))
 A1 <- data.matrix(f0_reports[f0_reports$tone=="A1",-c(1,c(22:26))])
-plot(colMeans(A1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 200))
-
+plot(colMeans(A1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200))
 # # Do the same for the other tones
 A2 <- data.matrix(f0_reports[f0_reports$tone=="A2",-c(1,c(22:26))])
-plot(colMeans(A2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 200))
+plot(colMeans(A2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200))
 
 B1 <- data.matrix(f0_reports[f0_reports$tone=="B1",-c(1,c(22:26))])
-plot(colMeans(B1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 200))
+plot(colMeans(B1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200))
 
 B2 <- data.matrix(f0_reports[f0_reports$tone=="B2",-c(1,c(22:26))])
-plot(colMeans(B2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(B2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
 
 C1 <- data.matrix(f0_reports[f0_reports$tone=="C1",-c(1,c(22:26))])
-plot(colMeans(C1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(C1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
 
 C2 <- data.matrix(f0_reports[f0_reports$tone=="C2",-c(1,c(22:26))])
-plot(colMeans(C2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(C2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
 
 D1 <- data.matrix(f0_reports[f0_reports$tone=="D1",-c(1,c(22:26))])
-plot(colMeans(D1)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(D1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
 
 D2 <- data.matrix(f0_reports[f0_reports$tone=="D2",-c(1,c(22:26))])
-plot(colMeans(D2)[2:19], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(D2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
 ```
 
 ### F0 contours on the same plot.
 ```{r}
-plot(colMeans(A1)[2:19], type="b", xlim=c(1, 18), ylim=c(60, 200))
-lines(colMeans(A2)[2:19],col="green", type="b", pch=19)
-lines(colMeans(B1)[2:19],col="red",  type="b", pch=19)
-lines(colMeans(B2)[2:19],col="purple", type="b",  pch=19)
-lines(colMeans(C1)[2:19],col="blue",  type="b", pch=19)
-lines(colMeans(C2)[2:19],col="orange",  type="b", pch=19)
+plot(colMeans(A1)[3:18], type="b", xlim=c(1, 18), ylim=c(60, 200), xlab="Sampling points", ylab="F0 (Hz)")
+lines(colMeans(A2)[3:18],col="green", type="b", pch=19)
+lines(colMeans(B1)[3:18],col="red",  type="b", pch=19)
+lines(colMeans(B2)[3:18],col="purple", type="b",  pch=19)
+lines(colMeans(C1)[3:18],col="blue",  type="b", pch=19)
+lines(colMeans(C2)[3:18],col="orange",  type="b", pch=19)
 
 # Add a legend
 legend(1, 100, legend=c("A1", "A2", "B1", "B2", "C1", "C2"),
@@ -252,10 +267,10 @@ legend(1, 100, legend=c("A1", "A2", "B1", "B2", "C1", "C2"),
 Plot B1, B2, D1, D2 together.
 
 ```{r}
-plot(colMeans(B1)[2:19], type="b", col="blue", xlim=c(1, 18), ylim=c(60, 200))
-lines(colMeans(B2)[2:19],col="purple", type="b",  pch=19)
-lines(colMeans(D1)[2:19],col="pink",  type="b", pch=19)  ## D1 has a very strange contour.
-lines(colMeans(D2)[2:19],col="black",  type="b", pch=19)
+plot(colMeans(B1)[3:18], type="b", col="blue", xlim=c(1, 18), ylim=c(60, 220), , xlab="Sampling points", ylab="F0 (Hz)")
+lines(colMeans(B2)[3:18],col="purple", type="b",  pch=19)
+lines(colMeans(D1)[3:18],col="pink",  type="b", pch=19)  ## D1 has a very strange contour.
+lines(colMeans(D2)[3:18],col="black",  type="b", pch=19)
 
 # Add a legend
 legend(1, 100, legend=c("B1", "B2", "D1", "D2"),
@@ -266,9 +281,9 @@ legend(1, 100, legend=c("B1", "B2", "D1", "D2"),
 ```{r}
 
 regression_report <- function(tone) {
-  lm_tone <- lm(colMeans(tone)[2:19]~ c(1:18))
-  plot(colMeans(tone)[2:19], pch = 16, cex = 1.3, xlim=c(1, 18), ylim=c(60, 250))
-  abline(lm(colMeans(tone)[2:19] ~ c(1:18)))
+  lm_tone <- lm(colMeans(tone)[3:18]~ c(1:16))
+  plot(colMeans(tone)[3:18], pch = 16, cex = 1.3, xlim=c(1, 18), ylim=c(60, 250))
+  abline(lm(colMeans(tone)[3:18] ~ c(1:16)))
   return(lm_tone)
 }
 
@@ -306,24 +321,28 @@ plot_f0_by_noise <- function(tone, s) {
     tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$single=="1",-c(1,c(22:26))])
   tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$single=="1",-c(1,c(22:26))])
   tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$single=="1",-c(1,c(22:26))])
-  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
-  lines(colMeans(tone_78)[2:19],col="green")
-  lines(colMeans(tone_90)[2:19],col="red")
+  plot(colMeans(tone_quiet)[3:18], type="l", xlim=c(1, 18), ylim=c(70, 250), xlab="Sampling points", ylab=paste("F0 for single tokens, tone", tone))
+  lines(colMeans(tone_78)[3:18],col="blue")
+  lines(colMeans(tone_90)[3:18],col="red")
+  legend(1, 100, legend=c("quiet", "78dB", "90dB"),
+       col=c("black", "blue", "red"), lty=1:2, cex=0.7)
   # Find regression coefficients and return them.
   c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
   } else {
     tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$single=="0",-c(1,c(22:26))])
   tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$single=="0",-c(1,c(22:26))])
   tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$single=="0",-c(1,c(22:26))])
-  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
-  lines(colMeans(tone_78)[2:19],col="green")
-  lines(colMeans(tone_90)[2:19],col="red")
+  plot(colMeans(tone_quiet)[3:18], type="l", xlim=c(1, 18), ylim=c(70, 250), xlab="Sampling points", ylab=paste("F0 for tokens in carrier, tone", tone))
+  lines(colMeans(tone_78)[3:18],col="blue")
+  lines(colMeans(tone_90)[3:18],col="red")
+    legend(1, 100, legend=c("quiet", "78dB", "90dB"),
+       col=c("black", "blue", "red"), lty=1:2, cex=0.7)
   c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
   }
 }
 
 coefficient_reports <- function(tone_matrix) {
-  lm_model <- lm(colMeans(tone_matrix)[2:19] ~ c(1:18))
+  lm_model <- lm(colMeans(tone_matrix)[3:18] ~ c(1:16))
   summary(lm_model)$coefficients[2,1]
 }
 ```
@@ -486,7 +505,7 @@ tab[16,1] = coefficient_reports(filter_f0("D2", "0", FALSE))
 tab[16,2] = coefficient_reports(filter_f0("D2", "78", FALSE))
 tab[16,3] = coefficient_reports(filter_f0("D2", "90", FALSE))
 
-tab
+print(tab)
 ```
 
 ## Tone Contour Analysis on Different Noise Levels on Vowel A.
@@ -529,27 +548,27 @@ plot_f0_by_vowels <- function(tone, vowel) {
     tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$vowel=="A",-c(1,c(22:26))])
   tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$vowel=="A",-c(1,c(22:26))])
   tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$vowel=="A",-c(1,c(22:26))])
-  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
-  lines(colMeans(tone_78)[2:19],col="green")
-  lines(colMeans(tone_90)[2:19],col="red")
+  plot(colMeans(tone_quiet)[3:18], type="l", xlim=c(1, 18), ylim=c(70, 250), xlab="Sampling points", ylab=paste("F0 for vowel A, tone", tone))
+  lines(colMeans(tone_78)[3:18],col="blue")
+  lines(colMeans(tone_90)[3:18],col="red")
   # Find regression coefficients and return them.
   c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
   } else if (vowel=="E") {
     tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$vowel=="E",-c(1,c(22:26))])
   tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$vowel=="E",-c(1,c(22:26))])
   tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$vowel=="E",-c(1,c(22:26))])
-  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
-  lines(colMeans(tone_78)[2:19],col="green")
-  lines(colMeans(tone_90)[2:19],col="red")
+  plot(colMeans(tone_quiet)[3:18], type="l", xlim=c(1, 18), ylim=c(70, 250), xlab="Sampling points", ylab=paste("F0 for vowel E, tone", tone))
+  lines(colMeans(tone_78)[3:18],col="blue")
+  lines(colMeans(tone_90)[3:18],col="red")
   # Find regression coefficients and return them.
   c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
   } else {
   tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$vowel=="U",-c(1,c(22:26))])
   tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$vowel=="U",-c(1,c(22:26))])
   tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$vowel=="U",-c(1,c(22:26))])
-  plot(colMeans(tone_quiet)[2:19], type="l", xlim=c(1, 18), ylim=c(70, 250))
-  lines(colMeans(tone_78)[2:19],col="green")
-  lines(colMeans(tone_90)[2:19],col="red")
+  plot(colMeans(tone_quiet)[3:18], type="l", xlim=c(1, 18), ylim=c(70, 250), xlab="Sampling points", ylab=paste("F0 for vowel U, tone", tone))
+  lines(colMeans(tone_78)[3:18],col="blue")
+  lines(colMeans(tone_90)[3:18],col="red")
   # Find regression coefficients and return them.
   c(summary(regression_report(tone_quiet))$coefficients[2,1], summary(regression_report(tone_78))$coefficients[2,1], summary(regression_report(tone_90))$coefficients[2,1])
   }

@@ -1,4 +1,4 @@
-myFolder = '\\client\h$\Desktop\prelim-data-analysis\f-2-90\channel1';
+myFolder = '\\client\h$\Desktop\prelim-data-analysis\f-2-q\channel1';
 myFiles = dir(fullfile(myFolder,'*.wav')); %gets all wav files
 
 for k = 1:length(myFiles)
