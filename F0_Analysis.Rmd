@@ -220,32 +220,81 @@ summary(f0_reports)
 ### F0 Plots
 ```{r}
 
-# Note that I only plot the 2nd to 19th sampled points.
+# # Confidence interval function using the t-distribution
+# confidence_interval <- function(vector, interval) {
+#   # Standard deviation of sample
+#   vec_sd <- sd(vector)
+#   # Sample size
+#   n <- length(vector)
+#   # Mean of sample
+#   vec_mean <- mean(vector)
+#   # Error according to t distribution
+#   error <- qt((interval + 1)/2, df = n - 1) * vec_sd / sqrt(n)
+#   # Confidence interval as a vector
+#   result <- c("lower" = vec_mean - error, "upper" = vec_mean + error)
+#   return(result)
+# }
+
+# Confidence interval function for a matrix using the t-distribution
+confidence_interval_matrix <- function(matrix, interval) {
+  # Standard deviation of sample
+  vec_sd <- apply(matrix, 2, sd)
+  # Sample size, assuming equal length of columns in the matrix
+  n <- length(matrix[,1])
+  # Mean of sample
+  vec_mean <- colMeans(matrix)
+  # Error according to the t-distribution
+  error <- qt((interval + 1)/2, df = n - 1) * vec_sd / sqrt(n)
+  # Confidence interval as a matrix of two columns
+  result <- c("lower" = vec_mean - error, "upper" = vec_mean + error)
+  return(result)
+}
+
+#confidence_interval(A1[,3],0.95) # this will return a lower and upper value of a vector.
+
+# Note that I only plot the 3nd to 18th sampled points.
 # Extract F0 of all tones A1 (574 instances)
 par(mfrow=c(2,4))
 A1 <- data.matrix(f0_reports[f0_reports$tone=="A1",-c(1,c(22:26))])
-plot(colMeans(A1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200))
+confidence_interval_matrix(A1[,3:18],0.95)[1:16]
+plot(colMeans(A1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200), xlab="Sampling points", ylab="F0 contour of tone A1")
+lines(confidence_interval_matrix(A1[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(A1[,3:18],0.95)[17:32], col="blue")
 # # Do the same for the other tones
 A2 <- data.matrix(f0_reports[f0_reports$tone=="A2",-c(1,c(22:26))])
-plot(colMeans(A2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200))
+plot(colMeans(A2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200), xlab="Sampling points", ylab="F0 contour of tone A2")
+lines(confidence_interval_matrix(A2[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(A2[,3:18],0.95)[17:32], col="blue")
 
 B1 <- data.matrix(f0_reports[f0_reports$tone=="B1",-c(1,c(22:26))])
-plot(colMeans(B1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200))
+plot(colMeans(B1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 200), xlab="Sampling points", ylab="F0 contour of tone B1")
+lines(confidence_interval_matrix(B1[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(B1[,3:18],0.95)[17:32], col="blue")
 
 B2 <- data.matrix(f0_reports[f0_reports$tone=="B2",-c(1,c(22:26))])
-plot(colMeans(B2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(B2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250), xlab="Sampling points", ylab="F0 contour of tone B2")
+lines(confidence_interval_matrix(B2[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(B2[,3:18],0.95)[17:32], col="blue")
 
 C1 <- data.matrix(f0_reports[f0_reports$tone=="C1",-c(1,c(22:26))])
-plot(colMeans(C1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(C1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250), xlab="Sampling points", ylab="F0 contour of tone C1")
+lines(confidence_interval_matrix(C1[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(C1[,3:18],0.95)[17:32], col="blue")
 
 C2 <- data.matrix(f0_reports[f0_reports$tone=="C2",-c(1,c(22:26))])
-plot(colMeans(C2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(C2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250), xlab="Sampling points", ylab="F0 contour of tone C2")
+lines(confidence_interval_matrix(C2[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(C2[,3:18],0.95)[17:32], col="blue")
 
 D1 <- data.matrix(f0_reports[f0_reports$tone=="D1",-c(1,c(22:26))])
-plot(colMeans(D1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(D1)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250), xlab="Sampling points", ylab="F0 contour of tone D1")
+lines(confidence_interval_matrix(D1[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(D1[,3:18],0.95)[17:32], col="blue")
 
 D2 <- data.matrix(f0_reports[f0_reports$tone=="D2",-c(1,c(22:26))])
-plot(colMeans(D2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250))
+plot(colMeans(D2)[3:18], type="l", xlim=c(1, 18), ylim=c(60, 250), xlab="Sampling points", ylab="F0 contour of tone D2")
+lines(confidence_interval_matrix(D2[,3:18],0.95)[1:16], col="blue")
+lines(confidence_interval_matrix(D2[,3:18],0.95)[17:32], col="blue")
 ```
 
 ### F0 contours on the same plot.
@@ -322,8 +371,14 @@ plot_f0_by_noise <- function(tone, s) {
   tone_78 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="78" & f0_reports$single=="1",-c(1,c(22:26))])
   tone_90 <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="90" & f0_reports$single=="1",-c(1,c(22:26))])
   plot(colMeans(tone_quiet)[3:18], type="l", xlim=c(1, 18), ylim=c(70, 250), xlab="Sampling points", ylab=paste("F0 for single tokens, tone", tone))
+#  lines(confidence_interval_matrix(tone_quiet[,3:18],0.95)[1:16], col="black")
+#  lines(confidence_interval_matrix(tone_quiet[,3:18],0.95)[16:32], col="black")
   lines(colMeans(tone_78)[3:18],col="blue")
+#  lines(confidence_interval_matrix(tone_78[,3:18],0.95)[1:16], col="blue")
+#  lines(confidence_interval_matrix(tone_78[,3:18],0.95)[16:32], col="blue")
   lines(colMeans(tone_90)[3:18],col="red")
+#  lines(confidence_interval_matrix(tone_90[,3:18],0.95)[1:16], col="red")
+#  lines(confidence_interval_matrix(tone_90[,3:18],0.95)[16:32], col="red")
   legend(1, 100, legend=c("quiet", "78dB", "90dB"),
        col=c("black", "blue", "red"), lty=1:2, cex=0.7)
   # Find regression coefficients and return them.
@@ -505,7 +560,7 @@ tab[16,1] = coefficient_reports(filter_f0("D2", "0", FALSE))
 tab[16,2] = coefficient_reports(filter_f0("D2", "78", FALSE))
 tab[16,3] = coefficient_reports(filter_f0("D2", "90", FALSE))
 
-print(tab)
+write.table(tab)
 ```
 
 ## Tone Contour Analysis on Different Noise Levels on Vowel A.
@@ -817,7 +872,7 @@ tab_vowel[24,2] = coefficient_reports(filter_f0("D2", "U", "78"))
 tab_vowel[24,3] = coefficient_reports(filter_f0("D2", "U", "90"))
 
 
-tab_vowel
+write.table(tab_vowel)
 
 
 ```
