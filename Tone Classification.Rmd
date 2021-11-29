@@ -19,7 +19,6 @@ Our data contains 12 voice reports from 12 recording sessions.
 ```{r}
 # Read in all the voice reports.
 dataFiles <- lapply(Sys.glob("*/channel1/acoustic_measurements_unique_*.csv"), read.csv)
-dataFiles[1]
 ```
 
 ```{r}
@@ -36,30 +35,41 @@ f_1_78 <- as.data.frame(dataFiles[1])
 f_1_90 <- as.data.frame(dataFiles[2])
 f_1_q <- as.data.frame(dataFiles[3])
 
-m_1_78 <- as.data.frame(dataFiles[4])
-m_1_90 <- as.data.frame(dataFiles[5])
-m_1_q <- as.data.frame(dataFiles[6])
+f_2_78 <- as.data.frame(dataFiles[4])
+f_2_90 <- as.data.frame(dataFiles[5])
+f_2_q <- as.data.frame(dataFiles[6])
 
-m_2_78 <- as.data.frame(dataFiles[7])
-#m_2_90 <- as.data.frame(dataFiles[8])
-#m_2_q <- as.data.frame(dataFiles[9])
+m_1_78 <- as.data.frame(dataFiles[7])
+m_1_90 <- as.data.frame(dataFiles[8])
+m_1_q <- as.data.frame(dataFiles[9])
 
-m_3_78 <- as.data.frame(dataFiles[8])
-m_3_90 <- as.data.frame(dataFiles[9])
-m_3_q <- as.data.frame(dataFiles[10])
+m_2_78 <- as.data.frame(dataFiles[10])
+m_2_90 <- as.data.frame(dataFiles[11])
+m_2_q <- as.data.frame(dataFiles[12])
 
+m_3_78 <- as.data.frame(dataFiles[13])
+m_3_90 <- as.data.frame(dataFiles[14])
+m_3_q <- as.data.frame(dataFiles[15])
+
+```
+
+```{r}
 # Assigning gender variable (0 for female and 1 for male)
 f_1_78$gender = 0
 f_1_90$gender = 0
 f_1_q$gender = 0
+
+f_2_78$gender = 0
+f_2_90$gender = 0
+f_2_q$gender = 0
 
 m_1_78$gender = 1
 m_1_90$gender = 1
 m_1_q$gender = 1
 
 m_2_78$gender = 1
-#m_2_90$gender = 1
-#m_2_q$gender = 1
+m_2_90$gender = 1
+m_2_q$gender = 1
 
 m_3_78$gender = 1
 m_3_90$gender = 1
@@ -70,26 +80,51 @@ f_1_78$noise = 78
 f_1_90$noise = 90
 f_1_q$noise = 0
 
+
+f_2_78$noise = 78
+f_2_90$noise = 90
+f_2_q$noise = 0
+
 m_1_78$noise = 78
 m_1_90$noise = 90
 m_1_q$noise = 0
 
 m_2_78$noise = 78
-#m_2_90$noise = 90
-#m_2_q$noise = 0
+m_2_90$noise = 90
+m_2_q$noise = 0
 
 m_3_78$noise = 78
 m_3_90$noise = 90
 m_3_q$noise = 0
 
+# Assigning speaker code
+f_1_78$speaker = "f-1"
+f_1_90$speaker = "f-1"
+f_1_q$speaker = "f-1"
+
+f_2_78$speaker = "f-2"
+f_2_90$speaker = "f-2"
+f_2_q$speaker = "f-2"
+
+m_1_78$speaker = "m-1"
+m_1_90$speaker = "m-1"
+m_1_q$speaker = "m-1"
+
+m_2_78$speaker = "m-2"
+m_2_90$speaker = "m-2"
+m_2_q$speaker = "m-2"
+
+m_3_78$speaker = "m-3"
+m_3_90$speaker = "m-3"
+m_3_q$speaker = "m-3"
 ```
 
 ```{r}
 ### Concatenate all dataframes
 voice_reports <- rbind(f_1_78, f_1_90, f_1_q,
+                       f_2_78, f_2_90, f_2_q,
                        m_1_78, m_1_90, m_1_q,
-                       m_2_78, 
-                       #m_2_90, m_2_q,
+                       m_2_78,m_2_90, m_2_q,
                        m_3_78, m_3_90, m_3_q)
 
 
@@ -113,25 +148,51 @@ voice_reports$single <- ifelse(grepl("single", voice_reports$sound.name), 1, 0)
 
 
 # Assign tone values
+# voice_reports$tone <- ifelse(grepl("a", voice_reports$sound.name, ignore.case=T), "A1",
+#                       ifelse(grepl("à", voice_reports$sound.name, ignore.case=T), "A2",
+#                       ifelse(grepl("á", voice_reports$sound.name, ignore.case=T), "B1",
+#                       ifelse(grepl("ả", voice_reports$sound.name, ignore.case=T), "C1",
+#                       ifelse(grepl("ã", voice_reports$sound.name, ignore.case=T), "C2",
+#                       ifelse(grepl("ạ", voice_reports$sound.name, ignore.case=T), "B2",
+#                       ifelse(grepl("ê", voice_reports$sound.name, ignore.case=T), "A1",
+#                       ifelse(grepl("ề", voice_reports$sound.name, ignore.case=T), "A2",
+#                       ifelse(grepl("ế", voice_reports$sound.name, ignore.case=T), "B1",
+#                       ifelse(grepl("ể", voice_reports$sound.name, ignore.case=T), "C1",
+#                       ifelse(grepl("ễ", voice_reports$sound.name, ignore.case=T), "C2",
+#                       ifelse(grepl("ệ", voice_reports$sound.name, ignore.case=T), "B2",
+#                       ifelse(grepl("u", voice_reports$sound.name, ignore.case=T), "A1",
+#                       ifelse(grepl("ù", voice_reports$sound.name, ignore.case=T), "A2",
+#                       ifelse(grepl("ú", voice_reports$sound.name, ignore.case=T), "B1",
+#                       ifelse(grepl("ủ", voice_reports$sound.name, ignore.case=T), "C1",
+#                       ifelse(grepl("ũ", voice_reports$sound.name, ignore.case=T), "C2",
+#                       ifelse(grepl("ụ", voice_reports$sound.name, ignore.case=T), "B2",
+#                       ifelse(grepl("ộ", voice_reports$sound.name, ignore.case=T), "B2","NA")))))))))))))))))))
+
 voice_reports$tone <- ifelse(grepl("a", voice_reports$sound.name, ignore.case=T), "A1",
-                      ifelse(grepl("à", voice_reports$sound.name, ignore.case=T), "A2",
-                      ifelse(grepl("á", voice_reports$sound.name, ignore.case=T), "B1",
-                      ifelse(grepl("ả", voice_reports$sound.name, ignore.case=T), "C1",
-                      ifelse(grepl("ã", voice_reports$sound.name, ignore.case=T), "C2",
-                      ifelse(grepl("ạ", voice_reports$sound.name, ignore.case=T), "B2",
-                      ifelse(grepl("ê", voice_reports$sound.name, ignore.case=T), "A1",
-                      ifelse(grepl("ề", voice_reports$sound.name, ignore.case=T), "A2",
-                      ifelse(grepl("ế", voice_reports$sound.name, ignore.case=T), "B1",
-                      ifelse(grepl("ể", voice_reports$sound.name, ignore.case=T), "C1",
-                      ifelse(grepl("ễ", voice_reports$sound.name, ignore.case=T), "C2",
-                      ifelse(grepl("ệ", voice_reports$sound.name, ignore.case=T), "B2",
-                      ifelse(grepl("u", voice_reports$sound.name, ignore.case=T), "A1",
-                      ifelse(grepl("ù", voice_reports$sound.name, ignore.case=T), "A2",
-                      ifelse(grepl("ú", voice_reports$sound.name, ignore.case=T), "B1",
-                      ifelse(grepl("ủ", voice_reports$sound.name, ignore.case=T), "C1",
-                      ifelse(grepl("ũ", voice_reports$sound.name, ignore.case=T), "C2",
-                      ifelse(grepl("ụ", voice_reports$sound.name, ignore.case=T), "B2",
-                      ifelse(grepl("ộ", voice_reports$sound.name, ignore.case=T), "B2","NA")))))))))))))))))))
+ifelse(grepl("_tát", voice_reports$sound.name, ignore.case=T), "D1",
+ifelse(grepl("_tạt", voice_reports$sound.name, ignore.case=T), "D2",
+ifelse(grepl("_tết", voice_reports$sound.name, ignore.case=T), "D1",
+ifelse(grepl("_tệt", voice_reports$sound.name, ignore.case=T), "D2",
+ifelse(grepl("_tút", voice_reports$sound.name, ignore.case=T), "D1",
+ifelse(grepl("_tụt", voice_reports$sound.name, ignore.case=T), "D2",
+ifelse(grepl("à", voice_reports$sound.name, ignore.case=T), "A2",
+ifelse(grepl("á", voice_reports$sound.name, ignore.case=T), "B1",
+ifelse(grepl("ả", voice_reports$sound.name, ignore.case=T), "C1",
+ifelse(grepl("ã", voice_reports$sound.name, ignore.case=T), "C2",
+ifelse(grepl("ạ", voice_reports$sound.name, ignore.case=T), "B2",
+ifelse(grepl("ê", voice_reports$sound.name, ignore.case=T), "A1",
+ifelse(grepl("ề", voice_reports$sound.name, ignore.case=T), "A2",
+ifelse(grepl("ế", voice_reports$sound.name, ignore.case=T), "B1",
+ifelse(grepl("ể", voice_reports$sound.name, ignore.case=T), "C1",
+ifelse(grepl("ễ", voice_reports$sound.name, ignore.case=T), "C2",
+ifelse(grepl("ệ", voice_reports$sound.name, ignore.case=T), "B2",
+ifelse(grepl("u", voice_reports$sound.name, ignore.case=T), "A1",
+ifelse(grepl("ù", voice_reports$sound.name, ignore.case=T), "A2",
+ifelse(grepl("ú", voice_reports$sound.name, ignore.case=T), "B1",
+ifelse(grepl("ủ", voice_reports$sound.name, ignore.case=T), "C1",
+ifelse(grepl("ũ", voice_reports$sound.name, ignore.case=T), "C2",
+ifelse(grepl("ụ", voice_reports$sound.name, ignore.case=T), "B2",
+ifelse(grepl("ộ", voice_reports$sound.name, ignore.case=T), "B2","NA")))))))))))))))))))))))))
 
 # Assign phonation types
 voice_reports$phonation <- ifelse(grepl("A1", voice_reports$tone, ignore.case=T), "modal",
@@ -162,6 +223,11 @@ length(voice_reports$tone[voice_reports$tone == "C1"])
 ## [1] 575
 length(voice_reports$tone[voice_reports$tone == "C2"])
 ## [1] 575
+
+length(voice_reports$tone[voice_reports$tone == "D1"])
+## [1] 575
+length(voice_reports$tone[voice_reports$tone == "D2"])
+## [1] 575
 length(voice_reports$tone[voice_reports$tone == "NA"])
 ## [1] 0
 ```
@@ -175,6 +241,7 @@ voice_reports$tone <- as.factor(voice_reports$tone)
 voice_reports$single <- as.factor(voice_reports$single)
 voice_reports$phonation <- as.factor(voice_reports$phonation)
 voice_reports$creaky <- as.factor(voice_reports$creaky)
+voice_reports$speaker <- as.factor(voice_reports$speaker)
 
 ```
 
@@ -184,28 +251,59 @@ voice_reports$creaky <- as.factor(voice_reports$creaky)
 summary(voice_reports)
 ```
 
+### Clean up undefined values to prepare for Classification
+```{r}
+
+## Method 1: Simply drop values that are undefined in jitter and shimmer variables
+voice_reports_clean <- voice_reports[!(voice_reports$jitter.local==" --undefined-- " | voice_reports$shimmer.local==" --undefined-- "),]
+
+# Convert two variables to numeric
+voice_reports_clean$jitter.local <- as.numeric(voice_reports_clean$jitter.local)
+voice_reports_clean$shimmer.local <- as.numeric(voice_reports_clean$shimmer.local)
+voice_reports_clean$median.F0 <- as.numeric(voice_reports_clean$median.F0)
+voice_reports_clean$mean.F0 <- as.numeric(voice_reports_clean$mean.F0)
+voice_reports_clean$sd.F0 <- as.numeric(voice_reports_clean$sd.F0)
+voice_reports_clean$min.F0 <- as.numeric(voice_reports_clean$min.F0)
+voice_reports_clean$max.F0 <- as.numeric(voice_reports_clean$max.F0)
+voice_reports_clean$number.pulses<- as.numeric(voice_reports_clean$number.pulses)
+voice_reports_clean$number.periods <- as.numeric(voice_reports_clean$number.periods)
+voice_reports_clean$mean.periods <- as.numeric(voice_reports_clean$mean.periods)
+#voice_reports_clean$sd.periods <- as.numeric(voice_reports_clean$sd.periods)
+voice_reports_clean$jitter.local.abs <- as.numeric(voice_reports_clean$jitter.local.abs)
+voice_reports_clean$jitter.rap <- as.numeric(voice_reports_clean$jitter.rap)
+voice_reports_clean$jitter.ppq5 <- as.numeric(voice_reports_clean$jitter.ppq5)
+voice_reports_clean$shimmer.local.db <- as.numeric(voice_reports_clean$shimmer.local.db)
+voice_reports_clean$shimmer.apq3 <- as.numeric(voice_reports_clean$shimmer.apq3)
+voice_reports_clean$shimmer.apq5 <- as.numeric(voice_reports_clean$shimmer.apq5)
+voice_reports_clean$shimmer.apq11 <- as.numeric(voice_reports_clean$shimmer.apq11)
+voice_reports_clean$mean.autocorr <- as.numeric(voice_reports_clean$mean.autocorr)
+voice_reports_clean$mean.NHR <- as.numeric(voice_reports_clean$mean.NHR)
+voice_reports_clean$mean.HNR <- as.numeric(voice_reports_clean$mean.HNR)
+summary(voice_reports_clean)
+dim(voice_reports_clean)
+```
+
 ### Logistic Regression on Gender
 ```{r}
-head(voice_reports)
-logit_gender = glm(gender ~ mean.F0 + total.duration + intensity +  mean.HNR, family = "binomial", data=voice_reports)
+logit_gender = glm(gender ~ mean.F0 + total.duration + intensity +  mean.HNR, family = "binomial", data=voice_reports_clean)
 summary(logit_gender)
 ```
 
 ### Logistic Regression on Creaky
 ```{r}
-logit_creaky = glm(creaky ~  mean.F0 + total.duration + intensity + spectraltilt + number.pulses + mean.HNR, family = "binomial", data=voice_reports)
+logit_creaky = glm(creaky ~  mean.F0 + total.duration + intensity + spectraltilt + number.pulses + mean.HNR, family = "binomial", data=voice_reports_clean)
 summary(logit_creaky)
 ```
 
 ### Multinomial Regression to predict the Noise Level.
 ```{r}
-## Use the multinom function from the nnet package (Ref: https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/)
+# Use the multinom function from the nnet package (Ref: https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/)
 
-library("nnet")
-# Use the 78 noise level as the reference level
-voice_reports$noise2 <- relevel(voice_reports$noise, ref = "78")
-multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports)
-summary(multinom_noise)
+# library("nnet")
+# # Use the 78 noise level as the reference level
+# voice_reports$noise2 <- relevel(voice_reports$noise, ref = "78")
+# multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports)
+# summary(multinom_noise)
 
 # The result in general supports our predictions regarding the relationship
 #between relative noise levels
@@ -234,19 +332,6 @@ summary(multinom_noise)
 #log odds of 90 noise vs. 78 noise in the amount of 0.011
 ```
 
-### Clean up undefined values to prepare for Classification
-```{r}
-
-## Method 1: Simply drop values that are undefined in jitter and shimmer variables
-voice_reports_clean <- voice_reports[!(voice_reports$jitter.local==" --undefined-- " | voice_reports$shimmer.local==" --undefined-- " ),]
-
-# Convert two variables to numeric
-voice_reports_clean$jitter.local <- as.numeric(voice_reports_clean$jitter.local)
-voice_reports_clean$shimmer.local <- as.numeric(voice_reports_clean$shimmer.local)
-
-summary(voice_reports_clean)
-
-```
 
 ## Classification using SMV (ref https://medium.com/@ODSC/build-a-multi-class-support-vector-machine-in-r-abcdd4b7dab6)
 
@@ -257,18 +342,19 @@ set.seed(777)
 n <- nrow(voice_reports_clean)
 ntrain <- round(n*0.75)  # 75% for training set
 tindex <- sample(n, ntrain)
+# Do not include noise predictor in this model yet.
 train <- voice_reports_clean[tindex,c("total.duration", "intensity", 
                                       "spectraltilt", "mean.F0", "jitter.local",
                                       "shimmer.local", "mean.HNR", "gender",
-                                      "noise", "F1", "F2", "tone")]
+                                      "tone")]
 test <- voice_reports_clean[-tindex,c("total.duration", "intensity",
                                       "spectraltilt", "mean.F0", "jitter.local",
                                       "shimmer.local", "mean.HNR", "gender",
-                                      "noise", "F1", "F2", "tone")]
+                                        "tone")]
 
 # Some factors cause any error probably due to not having the same levels between train and test?
 svm_model <- svm(tone ~ total.duration + intensity + spectraltilt + mean.F0 + jitter.local
-                 + shimmer.local + mean.HNR + gender + noise + F1 + F2, data=train, 
+                 + shimmer.local + mean.HNR + gender, data=train, 
           method="C-classification", kernal="radial", 
           gamma=0.1, cost=10)
 
@@ -276,13 +362,124 @@ summary(svm_model)
 prediction <- predict(svm_model, test)
 confusion <- table(test$tone, prediction)
 confusion
+
+# Accuracy
+sum(diag(confusion))/sum(confusion) 
 ```
 
-### Analysis of the F0 contours extracted from MatLab
+## Classification using k-means clustering
 
 ```{r}
+# install.packages("caret", repos = "http://cran.us.r-project.org")
+# library("caret")
+# 
+# set.seed(777)
+# n <- nrow(voice_reports_clean)
+# ntrain <- round(n*0.75)  # 75% for training set
+# tindex <- sample(n, ntrain)
+# # Do not include noise predictor in this model yet.
+# train <- voice_reports_clean[tindex,c("total.duration", "intensity", 
+#                                       "spectraltilt", "mean.F0", "jitter.local",
+#                                       "shimmer.local", "mean.HNR", "gender", "tone")]
+# test <- voice_reports_clean[-tindex,c("total.duration", "intensity",
+#                                       "spectraltilt", "mean.F0", "jitter.local",
+#                                       "shimmer.local", "mean.HNR", "gender", "tone")]
+# 
+# # Use repeated 5-fold cross-validation, with 3 repeats.
+# install.packages("kknn", repos = "http://cran.us.r-project.org")
+# library("kknn")
+# 
+# # I set the parameters of trainControl to be method ~ repeatedcv, 5 folds, # and 3 repeats.
+# control <- trainControl(method = "repeatedcv", number = 5, repeats=3)
+# # Here I train the model using knn, and k values from 1 to 10.
+# knn.cvfit <- train(tone ~ ., method = "knn", data = train,
+# tuneGrid = data.frame(k = seq(1, 10, 1)), trControl = control)
+# 
+# plot(knn.cvfit$results$k, 1-knn.cvfit$results$Accuracy,
+# xlab = "K", ylab = "Classification Error", type = "b", pch = 19, col = "darkorange")
+```
 
-F0test <- read.table("f-1-78/channel1/F0.mat", sep = " ")
-F0test
+## Vowels plotting 
+
+```{r}
+#http://lingtools.uoregon.edu/norm/about_norm1.php
+
+install.packages("vowels", repos='http://cran.us.r-project.org')
+library(vowels)
+```
+
+```{r}
+# Prepare vowels data
+vowels <- voice_reports_clean[, c(37, 1, 36, 31, 32, 33)]
+vowels$gl.F1 <- NA
+vowels$gl.F2 <- NA
+vowels$gl.F3 <- NA
+# Extracting a substring that contains only the syllable names.
+vowels$sound.name <- sapply(strsplit(vowels[,2], split="_", fixed=TRUE), "[", 2)
+
+# Add vowel annotation.
+
+vowels$vowel <- ifelse(grepl("a", vowels$sound.name, ignore.case=T), "A",
+ifelse(grepl("à", vowels$sound.name, ignore.case=T), "A",
+ifelse(grepl("á", vowels$sound.name, ignore.case=T), "A",
+ifelse(grepl("ả", vowels$sound.name, ignore.case=T), "A",
+ifelse(grepl("ã", vowels$sound.name, ignore.case=T), "A",
+ifelse(grepl("ạ", vowels$sound.name, ignore.case=T), "A",
+ifelse(grepl("ê", vowels$sound.name, ignore.case=T), "E",
+ifelse(grepl("ề", vowels$sound.name, ignore.case=T), "E",
+ifelse(grepl("ế", vowels$sound.name, ignore.case=T), "E",
+ifelse(grepl("ể", vowels$sound.name, ignore.case=T), "E",
+ifelse(grepl("ễ", vowels$sound.name, ignore.case=T), "E",
+ifelse(grepl("ệ", vowels$sound.name, ignore.case=T), "E",
+ifelse(grepl("u", vowels$sound.name, ignore.case=T), "U",
+ifelse(grepl("ù", vowels$sound.name, ignore.case=T), "U",
+ifelse(grepl("ú", vowels$sound.name, ignore.case=T), "U",
+ifelse(grepl("ủ", vowels$sound.name, ignore.case=T), "U",
+ifelse(grepl("ũ", vowels$sound.name, ignore.case=T), "U",
+ifelse(grepl("ụ", vowels$sound.name, ignore.case=T), "U",
+ifelse(grepl("ộ", vowels$sound.name, ignore.case=T), "O","NA")))))))))))))))))))
+
+# Convert vowel types to a factor variable
+vowels$vowel <- as.factor(vowels$vowel)
+vowels$noise <- as.factor(vowels$noise)
+vowels <- vowels[,c("speaker", "vowel", "noise", "F1", "F2", "F3", "gl.F1", "gl.F2", "gl.F3")]
+
+# plot only sub-dataframes
+vowels_plotting <- function(datamat, noise, speaker) {
+  vowels <- datamat[datamat$noise==noise & datamat$speaker==speaker,]
+  vowelplot(norm.bark(vowels), title=paste("F1-F2 vowel space for speaker", speaker, "in", noise), color="vowels", labels="noise", color.choice=rainbow(length(unique(vowels[,2]))))
+}
+
+vowels_plotting(vowels, 0, "f-1")
+vowels_plotting(vowels, 78, "f-1")
+vowels_plotting(vowels, 90, "f-1")
+
+vowels_plotting(vowels, 0, "f-2")
+vowels_plotting(vowels, 78, "f-2")
+vowels_plotting(vowels, 90, "f-2")
+
+
+vowels_plotting(vowels, 0, "m-1")
+vowels_plotting(vowels, 78, "m-1")
+vowels_plotting(vowels, 90, "m-1")
+
+vowels_plotting(vowels, 0, "m-2")
+vowels_plotting(vowels, 78, "m-2")
+vowels_plotting(vowels, 90, "m-2")
+
+vowels_plotting(vowels, 0, "m-3")
+vowels_plotting(vowels, 78, "m-3")
+vowels_plotting(vowels, 90, "m-3")
+
+# par(mfrow=c(2,1))
+# vowelplot(compute.means(vowels), shape="vowels")
+# vowelplot(compute.means(norm.lobanov(vowels)), shape="vowels")
+
+# par(mfrow=c(1,1))
+# g09.means <- compute.means(vowels, speaker="f-1")
+# vowelplot(g09.means, color="vowels", labels="none")
+# add.spread.vowelplot(vowels, speaker="f-1", sd.mult=1, color="vowels", labels="none")
+# # can add annotations to the vowel plots as any other R graph, eg:
+# legend("top", legend="Can you guess which vowel is 'BOY'?", col='lightslategrey', bty="n")
 
 ```

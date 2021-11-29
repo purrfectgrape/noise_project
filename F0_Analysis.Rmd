@@ -24,18 +24,11 @@ output:
 ---
 
 ## Plan for Analysis
-- Plot F0 and 95% confidence intervals on aggregate.
-- Plot F0 and 95% confidence intervals by gender, by noise levels, by vowels,
-by vowel and noise levels, by environment (isolation or in a carrier sentence) and also create a regression line for each categorization.
-- Summarize findings & email Yan
 Other notes
 Also leave one speaker out and try classification. If the reslt is good we can
 use it to predict tone produced on what kind of level (leave the noise level aside).
 The noise shouldn't matter much at this stage. (18 levels?)
-look at similarity of tones (using clustering). 
-- plot F1 and F2 and vowel spaces.
-
-
+look at similarity of tones (using clustering).
 
 ```{r}
 
