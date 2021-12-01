@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Data Import and Preprocessing
-Our data contains 12 voice reports from 12 recording sessions.
+Our data contains 15 voice reports from 15 recording sessions.
 
 ```{r}
 # Read in all the voice reports.
@@ -132,11 +132,6 @@ voice_reports <- rbind(f_1_78, f_1_90, f_1_q,
 ## Drop intervals that don't matter
 voice_reports <- voice_reports[!(endsWith(voice_reports$sound.name,"_")),]
 dim(voice_reports)
-mean(voice_reports$total.duration)
-sd(voice_reports$total.duration)
-min(voice_reports$total.duration)
-max(voice_reports$total.duration)
-summary(voice_reports$total.duration)
 head(voice_reports,10)
 ```
 
@@ -205,6 +200,7 @@ voice_reports$phonation <- ifelse(grepl("A1", voice_reports$tone, ignore.case=T)
 
 # Assign creakiness or not
 voice_reports$creaky <- ifelse(grepl("creaky", voice_reports$phonation, ignore.case=T), 1, 0)
+voice_reports$creaky <- as.factor(voice_reports$creaky)
 head(voice_reports, 20)
 ```
 
@@ -279,6 +275,7 @@ voice_reports_clean$shimmer.apq11 <- as.numeric(voice_reports_clean$shimmer.apq1
 voice_reports_clean$mean.autocorr <- as.numeric(voice_reports_clean$mean.autocorr)
 voice_reports_clean$mean.NHR <- as.numeric(voice_reports_clean$mean.NHR)
 voice_reports_clean$mean.HNR <- as.numeric(voice_reports_clean$mean.HNR)
+voice_reports_clean$tone <- as.factor(voice_reports_clean$tone)
 summary(voice_reports_clean)
 dim(voice_reports_clean)
 ```
@@ -291,19 +288,25 @@ summary(logit_gender)
 
 ### Logistic Regression on Creaky
 ```{r}
-logit_creaky = glm(creaky ~  mean.F0 + total.duration + intensity + spectraltilt + number.pulses + mean.HNR, family = "binomial", data=voice_reports_clean)
+logit_creaky = glm(creaky ~  mean.F0 + total.duration + intensity + spectraltilt + number.pulses + mean.HNR + jitter.local + shimmer.local, family = "binomial", data=voice_reports_clean)
 summary(logit_creaky)
 ```
 
+### Regression with Interaction
+```{r}
+lm_creaky = lm(jitter.local ~ mean.HNR + noise + mean.HNR*noise, data = voice_reports_clean)
+summary(lm_creaky)
+
+```
 ### Multinomial Regression to predict the Noise Level.
 ```{r}
 # Use the multinom function from the nnet package (Ref: https://stats.idre.ucla.edu/r/dae/multinomial-logistic-regression/)
 
-# library("nnet")
-# # Use the 78 noise level as the reference level
-# voice_reports$noise2 <- relevel(voice_reports$noise, ref = "78")
-# multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports)
-# summary(multinom_noise)
+library("nnet")
+# Use the 78 noise level as the reference level
+voice_reports_clean$noise2 <- relevel(voice_reports_clean$noise, ref = "78")
+multinom_noise <- multinom(noise2 ~ mean.F0 + total.duration + intensity + spectraltilt, data=voice_reports_clean)
+summary(multinom_noise)
 
 # The result in general supports our predictions regarding the relationship
 #between relative noise levels
@@ -370,30 +373,37 @@ sum(diag(confusion))/sum(confusion)
 ## Classification using k-means clustering
 
 ```{r}
-# install.packages("caret", repos = "http://cran.us.r-project.org")
-# library("caret")
-# 
-# set.seed(777)
-# n <- nrow(voice_reports_clean)
-# ntrain <- round(n*0.75)  # 75% for training set
-# tindex <- sample(n, ntrain)
-# # Do not include noise predictor in this model yet.
-# train <- voice_reports_clean[tindex,c("total.duration", "intensity", 
-#                                       "spectraltilt", "mean.F0", "jitter.local",
-#                                       "shimmer.local", "mean.HNR", "gender", "tone")]
-# test <- voice_reports_clean[-tindex,c("total.duration", "intensity",
-#                                       "spectraltilt", "mean.F0", "jitter.local",
-#                                       "shimmer.local", "mean.HNR", "gender", "tone")]
-# 
-# # Use repeated 5-fold cross-validation, with 3 repeats.
-# install.packages("kknn", repos = "http://cran.us.r-project.org")
-# library("kknn")
-# 
-# # I set the parameters of trainControl to be method ~ repeatedcv, 5 folds, # and 3 repeats.
-# control <- trainControl(method = "repeatedcv", number = 5, repeats=3)
+install.packages("caret", repos = "http://cran.us.r-project.org")
+library("caret")
+
+set.seed(777)
+n <- nrow(voice_reports_clean)
+ntrain <- round(n*0.75)  # 75% for training set
+tindex <- sample(n, ntrain)
+# Do not include noise predictor in this model yet.
+train <- voice_reports_clean[tindex,c("total.duration", "intensity",
+                                      "spectraltilt", "mean.F0", "jitter.local",
+                                      "shimmer.local", "mean.HNR", "gender", "tone")]
+test <- voice_reports_clean[-tindex,c("total.duration", "intensity",
+                                      "spectraltilt", "mean.F0", "jitter.local",
+                                          "shimmer.local", "mean.HNR", "gender", "tone")]
+summary(train)
+```
+
+```{r}
+# Use repeated 5-fold cross-validation, with 3 repeats.
+install.packages("kknn", repos = "http://cran.us.r-project.org")
+library("kknn")
+
+```
+
+```{r}
+
+# # I set the parameters of trainControl to be method ~ repeatedcv, 5 folds, # and 2 repeats.
+# control <- trainControl(method = "repeatedcv", number = 5, repeats=2)
 # # Here I train the model using knn, and k values from 1 to 10.
 # knn.cvfit <- train(tone ~ ., method = "knn", data = train,
-# tuneGrid = data.frame(k = seq(1, 10, 1)), trControl = control)
+# tuneGrid = data.frame(k = seq(1, 6, 1)), trControl = control)
 # 
 # plot(knn.cvfit$results$k, 1-knn.cvfit$results$Accuracy,
 # xlab = "K", ylab = "Classification Error", type = "b", pch = 19, col = "darkorange")
@@ -418,26 +428,25 @@ vowels$gl.F3 <- NA
 vowels$sound.name <- sapply(strsplit(vowels[,2], split="_", fixed=TRUE), "[", 2)
 
 # Add vowel annotation.
-
-vowels$vowel <- ifelse(grepl("a", vowels$sound.name, ignore.case=T), "A",
-ifelse(grepl("à", vowels$sound.name, ignore.case=T), "A",
-ifelse(grepl("á", vowels$sound.name, ignore.case=T), "A",
-ifelse(grepl("ả", vowels$sound.name, ignore.case=T), "A",
-ifelse(grepl("ã", vowels$sound.name, ignore.case=T), "A",
-ifelse(grepl("ạ", vowels$sound.name, ignore.case=T), "A",
-ifelse(grepl("ê", vowels$sound.name, ignore.case=T), "E",
-ifelse(grepl("ề", vowels$sound.name, ignore.case=T), "E",
-ifelse(grepl("ế", vowels$sound.name, ignore.case=T), "E",
-ifelse(grepl("ể", vowels$sound.name, ignore.case=T), "E",
-ifelse(grepl("ễ", vowels$sound.name, ignore.case=T), "E",
-ifelse(grepl("ệ", vowels$sound.name, ignore.case=T), "E",
-ifelse(grepl("u", vowels$sound.name, ignore.case=T), "U",
-ifelse(grepl("ù", vowels$sound.name, ignore.case=T), "U",
-ifelse(grepl("ú", vowels$sound.name, ignore.case=T), "U",
-ifelse(grepl("ủ", vowels$sound.name, ignore.case=T), "U",
-ifelse(grepl("ũ", vowels$sound.name, ignore.case=T), "U",
-ifelse(grepl("ụ", vowels$sound.name, ignore.case=T), "U",
-ifelse(grepl("ộ", vowels$sound.name, ignore.case=T), "O","NA")))))))))))))))))))
+vowels$vowel <- ifelse(grepl("a", vowels$sound.name, ignore.case=T), "a",
+ifelse(grepl("à", vowels$sound.name, ignore.case=T), "a",
+ifelse(grepl("á", vowels$sound.name, ignore.case=T), "a",
+ifelse(grepl("ả", vowels$sound.name, ignore.case=T), "a",
+ifelse(grepl("ã", vowels$sound.name, ignore.case=T), "a",
+ifelse(grepl("ạ", vowels$sound.name, ignore.case=T), "a",
+ifelse(grepl("ê", vowels$sound.name, ignore.case=T), "e",
+ifelse(grepl("ề", vowels$sound.name, ignore.case=T), "e",
+ifelse(grepl("ế", vowels$sound.name, ignore.case=T), "e",
+ifelse(grepl("ể", vowels$sound.name, ignore.case=T), "e",
+ifelse(grepl("ễ", vowels$sound.name, ignore.case=T), "e",
+ifelse(grepl("ệ", vowels$sound.name, ignore.case=T), "e",
+ifelse(grepl("u", vowels$sound.name, ignore.case=T), "u",
+ifelse(grepl("ù", vowels$sound.name, ignore.case=T), "u",
+ifelse(grepl("ú", vowels$sound.name, ignore.case=T), "u",
+ifelse(grepl("ủ", vowels$sound.name, ignore.case=T), "u",
+ifelse(grepl("ũ", vowels$sound.name, ignore.case=T), "u",
+ifelse(grepl("ụ", vowels$sound.name, ignore.case=T), "u",
+ifelse(grepl("ộ", vowels$sound.name, ignore.case=T), "o","NA")))))))))))))))))))
 
 # Convert vowel types to a factor variable
 vowels$vowel <- as.factor(vowels$vowel)
@@ -446,8 +455,14 @@ vowels <- vowels[,c("speaker", "vowel", "noise", "F1", "F2", "F3", "gl.F1", "gl.
 
 # plot only sub-dataframes
 vowels_plotting <- function(datamat, noise, speaker) {
-  vowels <- datamat[datamat$noise==noise & datamat$speaker==speaker,]
+  if (speaker == "all") {
+    vowels <- datamat[datamat$noise==noise,]
+    vowelplot(norm.bark(vowels), title=paste("F1-F2 vowel space for", speaker, "in", noise), color="vowels", labels="noise", color.choice=rainbow(length(unique(vowels[,2]))))
+  } else {
+    vowels <- datamat[datamat$noise==noise & datamat$speaker==speaker,]
   vowelplot(norm.bark(vowels), title=paste("F1-F2 vowel space for speaker", speaker, "in", noise), color="vowels", labels="noise", color.choice=rainbow(length(unique(vowels[,2]))))
+  }
+  
 }
 
 vowels_plotting(vowels, 0, "f-1")
@@ -482,4 +497,26 @@ vowels_plotting(vowels, 90, "m-3")
 # # can add annotations to the vowel plots as any other R graph, eg:
 # legend("top", legend="Can you guess which vowel is 'BOY'?", col='lightslategrey', bty="n")
 
+```
+
+```{r}
+vowels_plotting(vowels, 0, "all")
+vowels_plotting(vowels, 78, "all")
+vowels_plotting(vowels, 90, "all")
+```
+
+## Use phonR to calculate the hull area. Decreasing area found.
+```{r}
+install.packages("phonR", repos = 'http://cran.us.r-project.org')
+library(phonR)
+
+```
+
+```{r}
+
+convexHullArea(vowels$F1, vowels$F2, group=vowels$speaker)
+
+# reduced hull.area
+hull.area <- with(vowels, convexHullArea(F1, F2, group=noise))
+hull.area
 ```

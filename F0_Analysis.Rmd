@@ -3,9 +3,10 @@ title: "F0_analysis"
 author: "Giang Le"
 date: "11/5/2021"
 output:
+  pdf_document: default
+  word_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -309,14 +310,14 @@ legend(1, 100, legend=c("A1", "A2", "B1", "B2", "C1", "C2"),
 Plot B1, B2, D1, D2 together.
 
 ```{r}
-plot(colMeans(B1)[3:18], type="b", col="blue", xlim=c(1, 18), ylim=c(60, 220), , xlab="Sampling points", ylab="F0 (Hz)")
+plot(colMeans(B1)[3:18], type="b", col="red", xlim=c(1, 18), ylim=c(60, 220), , xlab="Sampling points", ylab="F0 (Hz)")
 lines(colMeans(B2)[3:18],col="purple", type="b",  pch=19)
 lines(colMeans(D1)[3:18],col="pink",  type="b", pch=19)  ## D1 has a very strange contour.
 lines(colMeans(D2)[3:18],col="black",  type="b", pch=19)
 
 # Add a legend
 legend(1, 100, legend=c("B1", "B2", "D1", "D2"),
-       col=c("blue", "orange", "pink", "black"), lty=1:2, cex=0.7)
+       col=c("red", "purple", "pink", "black"), lty=1:2, cex=0.7)
 ```
 
 ### Estimate Regression Lines for Each Tone on Aggregate.
@@ -358,6 +359,21 @@ filter_f0 <- function(tone, noise, s) {
   }
 }
 
+get_f0_range <- function(tone, s, condition) {
+  if (s==TRUE) {
+    tones <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise==condition & f0_reports$single=="1",-c(1,c(22:26))])
+  max <- max(colMeans(tones)[3:18])
+  min <- min(colMeans(tones)[3:18])
+  range <- abs(max - min)
+  return(range)
+  } else {
+    tones <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise==condition & f0_reports$single=="0",-c(1,c(22:26))])
+  max <- max(colMeans(tones)[3:18])
+  min <- min(colMeans(tones)[3:18])
+  range <- abs(max - min)
+  return(range)
+  }
+}
 plot_f0_by_noise <- function(tone, s) {
   if (s==TRUE) {
     tone_quiet <- data.matrix(f0_reports[f0_reports$tone==tone & f0_reports$noise=="0" & f0_reports$single=="1",-c(1,c(22:26))])
@@ -395,6 +411,16 @@ coefficient_reports <- function(tone_matrix) {
 }
 ```
 
+### Get F0 range
+
+```{r}
+for (x in c("A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2")) {
+  rangesingle <- c(get_f0_range(x, TRUE, 0), get_f0_range(x, TRUE, 78), get_f0_range(x, TRUE, 90))
+rangecarrier <- c(get_f0_range(x, FALSE, 0), get_f0_range(x, FALSE, 78), get_f0_range(x, FALSE, 90))
+print(rangesingle)
+print(rangecarrier)
+}
+```
 ### F0 and regression line for tone A1, single tokens.
 ```{r}
 plot_f0_by_noise("A1", TRUE)
